@@ -650,19 +650,21 @@ const CreatorStudio = () => {
         {/* Additional Inputs State */}
         {stage === 'inputs' && (
           <div className="animate-slide-up space-y-8 max-w-2xl mx-auto">
-            {/* Success Message */}
-            <div className="text-center p-6 rounded-2xl bg-primary/5 border border-primary/20">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-6 h-6 text-primary" />
+            {/* Success Message - Only show when audio was detected */}
+            {recordedTranscript && recordedTranscript.trim().length > 0 && (
+              <div className="text-center p-6 rounded-2xl bg-primary/5 border border-primary/20">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-6 h-6 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Great! Recording captured.</h2>
+                <p className="text-muted-foreground">
+                  Let's create your content. Add any extra context if needed.
+                </p>
+                <p className="text-xs text-primary mt-2">
+                  Mode: {creationMode === 'speaker' ? 'Speaker / Workshop' : 'Creator / Content'}
+                </p>
               </div>
-              <h2 className="text-2xl font-bold mb-2">Great! Recording captured.</h2>
-              <p className="text-muted-foreground">
-                Let's create your content. Add any extra context if needed.
-              </p>
-              <p className="text-xs text-primary mt-2">
-                Mode: {creationMode === 'speaker' ? 'Speaker / Workshop' : 'Creator / Content'}
-              </p>
-            </div>
+            )}
 
             {/* Always show transcript editor - even if empty so user can type manually */}
             <div className="space-y-2">
