@@ -83,7 +83,7 @@ const Onboarding = () => {
       if (error) throw error;
 
       toast({
-        title: "Welcome to ContentForge!",
+        title: "Welcome to Creator Studio!",
         description: "Your profile is set up. Let's create amazing content.",
       });
 

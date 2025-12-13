@@ -67,7 +67,7 @@ const Index = () => {
           <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center glow-border">
             <Sparkles className="w-4 h-4 text-primary" />
           </div>
-          <span className="font-semibold text-lg">ContentForge</span>
+          <span className="font-semibold text-lg">Creator Studio</span>
         </div>
       </header>
 
@@ -183,7 +183,7 @@ const Index = () => {
       <footer className="container mx-auto px-4 py-8 border-t border-border/30 relative z-10">
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <Sparkles className="w-4 h-4" />
-          <span>ContentForge — Strategic content, made simple</span>
+          <span>Creator Studio — Strategic content, made simple</span>
         </div>
       </footer>
     </div>
