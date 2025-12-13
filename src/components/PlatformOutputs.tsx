@@ -16,15 +16,15 @@ interface PlatformOutputsProps {
   onContentChange: (content: PlatformContent[]) => void;
 }
 
-const PLATFORM_CONFIG: Record<string, { icon: string; name: string; color: string }> = {
-  linkedin: { icon: '💼', name: 'LinkedIn', color: 'bg-blue-500/10 border-blue-500/30' },
-  instagram: { icon: '📸', name: 'Instagram', color: 'bg-pink-500/10 border-pink-500/30' },
-  twitter: { icon: '🐦', name: 'Twitter/X', color: 'bg-sky-500/10 border-sky-500/30' },
-  youtube: { icon: '🎬', name: 'YouTube', color: 'bg-red-500/10 border-red-500/30' },
-  tiktok: { icon: '🎵', name: 'TikTok', color: 'bg-fuchsia-500/10 border-fuchsia-500/30' },
-  facebook: { icon: '👥', name: 'Facebook', color: 'bg-indigo-500/10 border-indigo-500/30' },
-  threads: { icon: '🧵', name: 'Threads', color: 'bg-slate-500/10 border-slate-500/30' },
-  medium: { icon: '📝', name: 'Medium', color: 'bg-emerald-500/10 border-emerald-500/30' },
+const PLATFORM_CONFIG: Record<string, { name: string; color: string }> = {
+  linkedin: { name: 'LinkedIn', color: 'bg-blue-500/10 border-blue-500/30' },
+  instagram: { name: 'Instagram', color: 'bg-pink-500/10 border-pink-500/30' },
+  twitter: { name: 'Twitter/X', color: 'bg-sky-500/10 border-sky-500/30' },
+  youtube: { name: 'YouTube', color: 'bg-red-500/10 border-red-500/30' },
+  tiktok: { name: 'TikTok', color: 'bg-fuchsia-500/10 border-fuchsia-500/30' },
+  facebook: { name: 'Facebook', color: 'bg-indigo-500/10 border-indigo-500/30' },
+  threads: { name: 'Threads', color: 'bg-slate-500/10 border-slate-500/30' },
+  medium: { name: 'Medium', color: 'bg-emerald-500/10 border-emerald-500/30' },
 };
 
 const PlatformOutputs: React.FC<PlatformOutputsProps> = ({ content, onContentChange }) => {
@@ -69,7 +69,6 @@ const PlatformOutputs: React.FC<PlatformOutputsProps> = ({ content, onContentCha
   const getPlatformConfig = (platformId: string) => {
     const lower = platformId.toLowerCase();
     return PLATFORM_CONFIG[lower] || { 
-      icon: '🌐', 
       name: platformId.charAt(0).toUpperCase() + platformId.slice(1),
       color: 'bg-primary/10 border-primary/30'
     };
@@ -101,10 +100,7 @@ const PlatformOutputs: React.FC<PlatformOutputsProps> = ({ content, onContentCha
           >
             {/* Platform Header */}
             <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{config.icon}</span>
-                <span className="font-semibold">{config.name}</span>
-              </div>
+              <span className="font-semibold">{config.name}</span>
               <Button
                 variant="ghost"
                 size="sm"
