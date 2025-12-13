@@ -252,7 +252,7 @@ const Auth = () => {
 
         toast({
           title: "Account created!",
-          description: "Welcome to ContentForge.",
+          description: "Welcome to Creator Studio.",
         });
       }
     } catch {
@@ -288,7 +288,7 @@ const Auth = () => {
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center glow-border">
               <Sparkles className="w-5 h-5 text-primary" />
             </div>
-            <span className="text-2xl font-semibold">ContentForge</span>
+            <span className="text-2xl font-semibold">Creator Studio</span>
           </div>
           <h1 className="text-3xl font-bold mb-2">
             {isLogin ? "Welcome back" : "Create your account"}
