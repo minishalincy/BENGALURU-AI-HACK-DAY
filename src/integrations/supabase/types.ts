@@ -85,6 +85,54 @@ export type Database = {
         }
         Relationships: []
       }
+      event_recordings: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          duration_seconds: number | null
+          event_title: string | null
+          id: string
+          insights: Json | null
+          instagram_caption: string | null
+          linkedin_post: string | null
+          status: string
+          transcription: string | null
+          twitter_thread: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          event_title?: string | null
+          id?: string
+          insights?: Json | null
+          instagram_caption?: string | null
+          linkedin_post?: string | null
+          status?: string
+          transcription?: string | null
+          twitter_thread?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          event_title?: string | null
+          id?: string
+          insights?: Json | null
+          instagram_caption?: string | null
+          linkedin_post?: string | null
+          status?: string
+          transcription?: string | null
+          twitter_thread?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null

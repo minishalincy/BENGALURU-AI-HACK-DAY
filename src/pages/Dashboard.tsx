@@ -11,13 +11,15 @@ import {
   PenLine,
   LogOut,
   Loader2,
+  Mic,
 } from "lucide-react";
 import { AttentionAnalysis } from "@/components/AttentionAnalysis";
 import { RepetitionCheck } from "@/components/RepetitionCheck";
 import { FormatRecommendation } from "@/components/FormatRecommendation";
 import { HookGenerator } from "@/components/HookGenerator";
+import LiveEventRecorder from "@/components/LiveEventRecorder";
 
-type FeatureKey = "attention" | "repetition" | "format" | "hooks";
+type FeatureKey = "attention" | "repetition" | "format" | "hooks" | "live-event";
 
 interface UserProfile {
   niche: string;
@@ -27,6 +29,13 @@ interface UserProfile {
 }
 
 const features = [
+  {
+    key: "live-event" as FeatureKey,
+    icon: Mic,
+    title: "Record Live Event",
+    description: "Capture & convert events to content",
+    color: "text-rose-400",
+  },
   {
     key: "attention" as FeatureKey,
     icon: Zap,
@@ -198,6 +207,9 @@ const Dashboard = () => {
               ← Back to actions
             </Button>
 
+            {activeFeature === "live-event" && (
+              <LiveEventRecorder userProfile={profile} />
+            )}
             {activeFeature === "attention" && (
               <AttentionAnalysis userProfile={profile} />
             )}
