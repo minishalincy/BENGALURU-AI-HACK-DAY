@@ -1,5 +1,5 @@
-import React from 'react';
-import { Copy, Check, ImageIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { Copy, Check, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 interface PlatformContent {
   platform: string;
   caption: string;
-  thumbnailConcept: string;
+  thumbnailUrl?: string;
+  thumbnailConcept?: string;
 }
 
 interface PlatformOutputsProps {
@@ -28,7 +29,8 @@ const PLATFORM_CONFIG: Record<string, { icon: string; name: string; color: strin
 
 const PlatformOutputs: React.FC<PlatformOutputsProps> = ({ content, onContentChange }) => {
   const { toast } = useToast();
-  const [copiedIndex, setCopiedIndex] = React.useState<number | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
 
   const handleCopy = async (text: string, index: number) => {
     await navigator.clipboard.writeText(text);
@@ -43,6 +45,27 @@ const PlatformOutputs: React.FC<PlatformOutputsProps> = ({ content, onContentCha
     onContentChange(updated);
   };
 
+  const handleDownloadThumbnail = async (thumbnailUrl: string, platform: string, index: number) => {
+    try {
+      setDownloadingIndex(index);
+      const response = await fetch(thumbnailUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${platform}-thumbnail.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "Thumbnail downloaded!" });
+    } catch (error) {
+      toast({ title: "Download failed", variant: "destructive" });
+    } finally {
+      setDownloadingIndex(null);
+    }
+  };
+
   const getPlatformConfig = (platformId: string) => {
     const lower = platformId.toLowerCase();
     return PLATFORM_CONFIG[lower] || { 
@@ -52,7 +75,6 @@ const PlatformOutputs: React.FC<PlatformOutputsProps> = ({ content, onContentCha
     };
   };
 
-  // Determine grid layout based on number of platforms
   const getGridClass = () => {
     switch (content.length) {
       case 1:
@@ -103,8 +125,38 @@ const PlatformOutputs: React.FC<PlatformOutputsProps> = ({ content, onContentCha
               </Button>
             </div>
 
-            {/* Caption */}
+            {/* Content */}
             <div className="p-4 space-y-4">
+              {/* AI Generated Thumbnail */}
+              {item.thumbnailUrl && (
+                <div className="space-y-2">
+                  <div className="relative group">
+                    <img
+                      src={item.thumbnailUrl}
+                      alt={`${item.platform} thumbnail`}
+                      className="w-full aspect-video rounded-lg object-cover border border-border/30"
+                    />
+                    <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleDownloadThumbnail(item.thumbnailUrl!, item.platform, index)}
+                        disabled={downloadingIndex === index}
+                        className="gap-2"
+                      >
+                        {downloadingIndex === index ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4" />
+                        )}
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Caption */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">
                   Caption
@@ -116,21 +168,6 @@ const PlatformOutputs: React.FC<PlatformOutputsProps> = ({ content, onContentCha
                   placeholder="Your caption..."
                 />
               </div>
-
-              {/* Thumbnail Concept */}
-              {item.thumbnailConcept && (
-                <div className="p-3 rounded-lg bg-secondary/30 border border-border/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Thumbnail Idea
-                    </span>
-                  </div>
-                  <p className="text-sm text-foreground/80">
-                    {item.thumbnailConcept}
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         );
