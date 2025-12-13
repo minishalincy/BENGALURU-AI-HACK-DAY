@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, ArrowLeft, Image, FileText, Calendar, 
-  Copy, Download, ExternalLink, Sparkles, User, LogOut,
+  Copy, Download, ExternalLink, Wand2, User, LogOut,
   Clock, Layers, MessageSquare, Presentation, Target
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -251,7 +251,7 @@ const MyCreations = () => {
         {creations.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-              <Sparkles className="w-10 h-10 text-primary" />
+              <Wand2 className="w-10 h-10 text-primary" />
             </div>
             <h2 className="text-2xl font-bold mb-2">No creations yet</h2>
             <p className="text-muted-foreground mb-6">

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, FileText, Image, Headphones, Brain, Wand2, CheckCircle2, ArrowRight, FolderOpen, Zap, Users, Presentation, Lightbulb, MessageSquare, Target, ThumbsUp } from "lucide-react";
+import { Mic, Pause, Play, Square, Loader2, User, LogOut, FileText, Image, Headphones, Brain, Wand2, CheckCircle2, ArrowRight, FolderOpen, Zap, Users, Presentation, Lightbulb, MessageSquare, Target, ThumbsUp } from "lucide-react";
 import { useOfflineRecorder } from "@/hooks/useOfflineRecorder";
 import AudioWaveform from "@/components/AudioWaveform";
 import PlatformSelector from "@/components/PlatformSelector";
@@ -350,7 +350,7 @@ const CreatorStudio = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary" />
+              <Wand2 className="w-4 h-4 text-primary" />
             </div>
             <span className="font-semibold text-lg tracking-tight">Creator Studio</span>
           </div>
@@ -451,7 +451,7 @@ const CreatorStudio = () => {
                       : 'hover:bg-card/80 text-muted-foreground'
                   }`}
                 >
-                  <Sparkles className="w-5 h-5" />
+                  <Wand2 className="w-5 h-5" />
                   <span className="font-medium text-sm">Creator Mode</span>
                   <span className="text-xs opacity-70 text-center leading-tight">
                     Engaging captions & platform-ready
