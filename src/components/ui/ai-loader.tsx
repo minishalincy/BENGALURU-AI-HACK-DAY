@@ -24,7 +24,7 @@ export const AILoader: React.FC<AILoaderProps> = ({
             className="inline-block text-foreground opacity-40 text-xl font-medium animate-loader-letter"
             style={{ animationDelay: `${index * 0.1}s` }}
           >
-            {letter}
+            {letter === ' ' ? '\u00A0' : letter}
           </span>
         ))}
 
