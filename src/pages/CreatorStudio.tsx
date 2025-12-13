@@ -425,9 +425,16 @@ const CreatorStudio = () => {
             </div>
 
             {recordedTranscript && (
-              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-                <p className="text-xs font-medium text-muted-foreground mb-2">RECORDED TRANSCRIPT</p>
-                <p className="text-sm line-clamp-3">{recordedTranscript}</p>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Recorded Transcript
+                </label>
+                <textarea
+                  value={recordedTranscript}
+                  onChange={(e) => setRecordedTranscript(e.target.value)}
+                  className="w-full min-h-[120px] p-4 rounded-xl bg-primary/5 border border-primary/20 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  placeholder="Your transcription will appear here..."
+                />
               </div>
             )}
 
