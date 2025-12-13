@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mic, Pause, Square, Play, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { Mic, Pause, Square, Play, Loader2, CheckCircle, AlertCircle, Radio } from 'lucide-react';
+import { useRealtimeRecorder } from '@/hooks/useRealtimeRecorder';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import AudioWaveform from '@/components/AudioWaveform';
 
 interface UserProfile {
   niche: string | null;
@@ -28,11 +30,31 @@ interface GeneratedContent {
 }
 
 const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) => {
-  const { isRecording, isPaused, duration, startRecording, pauseRecording, resumeRecording, stopRecording, error: recorderError } = useAudioRecorder();
+  const { 
+    isRecording, 
+    isPaused, 
+    duration, 
+    liveTranscript,
+    analyser,
+    startRecording, 
+    pauseRecording, 
+    resumeRecording, 
+    stopRecording, 
+    error: recorderError 
+  } = useRealtimeRecorder();
+  
   const [processingStage, setProcessingStage] = useState<ProcessingStage>('idle');
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const transcriptEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Auto-scroll transcript
+  useEffect(() => {
+    if (transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [liveTranscript]);
 
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -41,7 +63,7 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
   };
 
   const handleStopAndProcess = async () => {
-    const audioBlob = await stopRecording();
+    const { audioBlob, transcript } = await stopRecording();
     
     if (!audioBlob) {
       toast({
@@ -52,15 +74,17 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
       return;
     }
 
+    // Use the live transcript if available, otherwise fall back to AI transcription
+    const finalTranscript = transcript.trim();
+
     try {
       setProcessingStage('uploading');
       setErrorMessage(null);
 
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Create a recording entry in the database
+      // Create recording entry
       const { data: recording, error: insertError } = await supabase
         .from('event_recordings')
         .insert({
@@ -73,7 +97,7 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
 
       if (insertError) throw insertError;
 
-      // Upload audio to storage
+      // Upload audio
       const fileName = `${user.id}/${recording.id}.webm`;
       const { error: uploadError } = await supabase.storage
         .from('event-recordings')
@@ -84,37 +108,41 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
 
       if (uploadError) throw uploadError;
 
-      // Get the audio URL
       const { data: { publicUrl } } = supabase.storage
         .from('event-recordings')
         .getPublicUrl(fileName);
 
-      // Update recording with audio URL
       await supabase
         .from('event_recordings')
         .update({ audio_url: publicUrl })
         .eq('id', recording.id);
 
-      // Step 2: Transcribe
-      setProcessingStage('transcribing');
+      // If we have a live transcript, use it directly
+      // Otherwise, use AI transcription
+      let transcription = finalTranscript;
+      
+      if (!transcription || transcription.length < 20) {
+        setProcessingStage('transcribing');
+        
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
 
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+        const transcribeResponse = await supabase.functions.invoke('transcribe-audio', {
+          body: formData
+        });
 
-      const transcribeResponse = await supabase.functions.invoke('transcribe-audio', {
-        body: formData
-      });
+        if (transcribeResponse.error) {
+          throw new Error(transcribeResponse.error.message || 'Transcription failed');
+        }
 
-      if (transcribeResponse.error) {
-        throw new Error(transcribeResponse.error.message || 'Transcription failed');
+        transcription = transcribeResponse.data?.transcription || '';
       }
 
-      const transcription = transcribeResponse.data?.transcription;
       if (!transcription) {
-        throw new Error('No transcription returned');
+        throw new Error('No transcription available');
       }
 
-      // Step 3: Analyze and generate content
+      // Generate content
       setProcessingStage('analyzing');
 
       const processResponse = await supabase.functions.invoke('process-event-audio', {
@@ -130,8 +158,6 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
       }
 
       setProcessingStage('generating');
-
-      // Short delay for UX
       await new Promise(resolve => setTimeout(resolve, 500));
 
       setGeneratedContent(processResponse.data.content);
@@ -160,20 +186,24 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
     setErrorMessage(null);
   };
 
-  // Recording UI
+  // Initial state - not recording
   if (processingStage === 'idle' && !isRecording) {
     return (
       <Card className="border-border/50 bg-card/50 backdrop-blur">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Record Live Event</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Capture insights from workshops, talks, or panels. AI will extract key points and generate ready-to-post content.
+            Capture insights from workshops, talks, or panels with real-time transcription and waveform visualization.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-6">
-          <div className="w-32 h-32 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center">
-            <Mic className="w-12 h-12 text-primary" />
+          <div className="w-full h-[200px] bg-secondary/30 rounded-xl flex items-center justify-center border border-border/50">
+            <div className="text-center">
+              <Mic className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground text-sm">Waveform will appear here</p>
+            </div>
           </div>
+          
           <Button 
             onClick={startRecording}
             size="lg"
@@ -182,37 +212,68 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
             <Mic className="w-5 h-5" />
             Start Recording
           </Button>
+          
           {recorderError && (
             <p className="text-destructive text-sm">{recorderError}</p>
           )}
+          
           <p className="text-sm text-muted-foreground text-center max-w-md">
-            Ensure you have microphone permissions enabled. The recording will be processed locally and securely.
+            Real-time transcription works best in Chrome or Edge. Speak clearly for accurate results.
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  // Active recording UI
-  if (isRecording || processingStage === 'idle') {
+  // Active recording UI with waveform and live transcript
+  if (isRecording) {
     return (
       <Card className="border-border/50 bg-card/50 backdrop-blur">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Recording in Progress</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Capturing audio... Stop when the event portion is complete.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center gap-6">
-          <div className={`w-32 h-32 rounded-full border-4 flex items-center justify-center transition-colors ${
-            isPaused 
-              ? 'bg-muted border-muted-foreground/30' 
-              : 'bg-destructive/10 border-destructive animate-pulse'
-          }`}>
-            <span className="text-3xl font-mono font-bold">{formatDuration(duration)}</span>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full ${isPaused ? 'bg-muted-foreground' : 'bg-destructive animate-pulse'}`} />
+              <CardTitle className="text-xl">
+                {isPaused ? 'Paused' : 'Recording Live'}
+              </CardTitle>
+            </div>
+            <div className="flex items-center gap-2 text-2xl font-mono font-bold text-primary">
+              <Radio className={`w-5 h-5 ${isPaused ? 'text-muted-foreground' : 'text-destructive'}`} />
+              {formatDuration(duration)}
+            </div>
           </div>
-          
-          <div className="flex gap-3">
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {/* Waveform Visualization */}
+          <div className="w-full h-[200px] rounded-xl overflow-hidden border border-border/50">
+            <AudioWaveform 
+              analyser={analyser} 
+              isRecording={isRecording} 
+              isPaused={isPaused} 
+            />
+          </div>
+
+          {/* Live Transcription */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-muted-foreground' : 'bg-primary animate-pulse'}`} />
+              <span className="text-sm font-medium">Live Transcription</span>
+            </div>
+            <ScrollArea className="h-[150px] w-full rounded-lg border border-border/50 bg-secondary/20 p-4">
+              <p className="text-sm leading-relaxed">
+                {liveTranscript || (
+                  <span className="text-muted-foreground italic">
+                    {isPaused ? 'Recording paused...' : 'Listening for speech...'}
+                  </span>
+                )}
+              </p>
+              <div ref={transcriptEndRef} />
+            </ScrollArea>
+          </div>
+
+          {/* Controls */}
+          <div className="flex justify-center gap-3 pt-2">
             {isPaused ? (
               <Button onClick={resumeRecording} variant="outline" size="lg" className="gap-2">
                 <Play className="w-5 h-5" />
@@ -226,13 +287,9 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
             )}
             <Button onClick={handleStopAndProcess} variant="destructive" size="lg" className="gap-2">
               <Square className="w-5 h-5" />
-              Stop & Process
+              Stop & Generate Content
             </Button>
           </div>
-
-          <p className="text-sm text-muted-foreground text-center">
-            {isPaused ? 'Recording paused' : 'Recording... speak clearly for best transcription'}
-          </p>
         </CardContent>
       </Card>
     );
@@ -242,7 +299,7 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
   if (['uploading', 'transcribing', 'analyzing', 'generating'].includes(processingStage)) {
     const stages = [
       { key: 'uploading', label: 'Uploading audio' },
-      { key: 'transcribing', label: 'Transcribing speech' },
+      { key: 'transcribing', label: 'Finalizing transcription' },
       { key: 'analyzing', label: 'Extracting insights' },
       { key: 'generating', label: 'Generating content' }
     ];
@@ -250,9 +307,9 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
     return (
       <Card className="border-border/50 bg-card/50 backdrop-blur">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Analyzing Event Audio</CardTitle>
+          <CardTitle className="text-2xl">Processing Your Event</CardTitle>
           <CardDescription className="text-muted-foreground">
-            AI is processing your recording...
+            AI is analyzing your recording...
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-6">
@@ -349,7 +406,10 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
                 </p>
               </div>
               <Button 
-                onClick={() => navigator.clipboard.writeText(generatedContent.linkedin.post)}
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedContent.linkedin.post);
+                  toast({ title: "Copied to clipboard!" });
+                }}
                 variant="outline"
                 className="w-full"
               >
@@ -376,7 +436,10 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
                 </p>
               </div>
               <Button 
-                onClick={() => navigator.clipboard.writeText(generatedContent.instagram.caption)}
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedContent.instagram.caption);
+                  toast({ title: "Copied to clipboard!" });
+                }}
                 variant="outline"
                 className="w-full"
               >
@@ -403,7 +466,10 @@ const LiveEventRecorder: React.FC<LiveEventRecorderProps> = ({ userProfile }) =>
                 </p>
               </div>
               <Button 
-                onClick={() => navigator.clipboard.writeText(generatedContent.twitter.thread)}
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedContent.twitter.thread);
+                  toast({ title: "Copied to clipboard!" });
+                }}
                 variant="outline"
                 className="w-full"
               >
