@@ -181,19 +181,42 @@ Create content in the following JSON format:
 
     const contentData = await contentResponse.json();
     const contentText = contentData.choices?.[0]?.message?.content || '';
+    
+    console.log('Content generation raw response length:', contentText.length);
 
-    // Parse content JSON
+    // Parse content JSON with better error handling
     let generatedContent;
     try {
+      // Try to find JSON in the response
       const jsonMatch = contentText.match(/\{[\s\S]*\}/);
-      generatedContent = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-    } catch {
-      console.error('Failed to parse content JSON');
-      generatedContent = null;
+      if (jsonMatch) {
+        generatedContent = JSON.parse(jsonMatch[0]);
+      }
+    } catch (parseError) {
+      console.error('Failed to parse content JSON:', parseError);
+      console.error('Raw content text:', contentText.substring(0, 500));
     }
 
+    // Fallback: generate simple content from insights if parsing fails
     if (!generatedContent) {
-      throw new Error('Failed to parse generated content');
+      console.log('Using fallback content generation');
+      const summary = insights.eventSummary || 'Key insights from the event';
+      const keyPoint = insights.keyInsights?.[0] || 'Valuable takeaways shared';
+      
+      generatedContent = {
+        linkedinPost: {
+          content: `🎯 Just attended an insightful event!\n\n${summary}\n\nKey takeaway: ${keyPoint}\n\nWhat's your experience with this topic? Drop a comment below! 👇`,
+          whyItWorks: "Professional tone with engagement prompt"
+        },
+        instagramCaption: {
+          content: `✨ Event highlights ✨\n\n${summary}\n\n💡 ${keyPoint}\n\n#insights #learning #growth`,
+          whyItWorks: "Visual storytelling with hashtags for discovery"
+        },
+        twitterThread: {
+          content: `🧵 Quick thread from today's event:\n\n${summary}\n\n💡 ${keyPoint}`,
+          whyItWorks: "Concise format optimized for Twitter engagement"
+        }
+      };
     }
 
     console.log('Generated content for all platforms');
