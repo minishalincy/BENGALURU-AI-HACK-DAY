@@ -48,10 +48,17 @@ interface Creation {
   recommended_platforms: RecommendedPlatform[] | null;
 }
 
+interface AuthUser {
+  email: string | null;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
 const MyCreations = () => {
   const [creations, setCreations] = useState<Creation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCreation, setSelectedCreation] = useState<Creation | null>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -73,6 +80,15 @@ const MyCreations = () => {
         navigate("/auth");
         return;
       }
+
+      // Extract user info from auth metadata
+      const user = session.user;
+      const userMeta = user.user_metadata || {};
+      setAuthUser({
+        email: user.email || null,
+        name: userMeta.full_name || userMeta.name || user.email?.split('@')[0] || null,
+        avatarUrl: userMeta.avatar_url || userMeta.picture || null
+      });
 
       const { data, error } = await supabase
         .from("event_recordings")
@@ -110,6 +126,20 @@ const MyCreations = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
+  };
+
+  const getInitials = (name: string | null, email: string | null): string => {
+    if (name) {
+      const parts = name.split(' ');
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return name[0].toUpperCase();
+    }
+    if (email) {
+      return email[0].toUpperCase();
+    }
+    return 'U';
   };
 
   const copyToClipboard = (text: string, platform: string) => {
@@ -184,12 +214,30 @@ const MyCreations = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <User className="w-5 h-5" />
-              </Button>
+              <button className="w-9 h-9 rounded-full overflow-hidden border-2 border-transparent hover:border-primary/30 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20">
+                {authUser?.avatarUrl ? (
+                  <img 
+                    src={authUser.avatarUrl} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
+                    {getInitials(authUser?.name || null, authUser?.email || null)}
+                  </div>
+                )}
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+            <DropdownMenuContent align="end" className="w-56 bg-popover border-border">
+              <div className="px-3 py-3 border-b border-border/50">
+                <p className="text-sm font-medium truncate">
+                  {authUser?.name || authUser?.email?.split('@')[0] || 'User'}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {authUser?.email}
+                </p>
+              </div>
+              <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign out
               </DropdownMenuItem>
