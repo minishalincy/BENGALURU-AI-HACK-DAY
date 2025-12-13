@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { Wand2, ArrowRight, ArrowLeft, Check } from "lucide-react";
 
 const platforms = [
   { id: "instagram", label: "Instagram", icon: "" },
@@ -139,7 +139,7 @@ const Onboarding = () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary" />
+              <Wand2 className="w-5 h-5 text-primary" />
             </div>
           </div>
           <h1 className="text-3xl font-bold mb-2">
@@ -255,7 +255,7 @@ const Onboarding = () => {
                 ) : (
                   <>
                     Get Started
-                    <Sparkles className="w-4 h-4" />
+                    <Wand2 className="w-4 h-4" />
                   </>
                 )}
               </Button>

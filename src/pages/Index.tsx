@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowRight, Zap, RefreshCw, Layout, PenLine } from "lucide-react";
+import { Wand2, ArrowRight, Zap, RefreshCw, Layout, PenLine } from "lucide-react";
 
 const features = [
   {
@@ -65,7 +65,7 @@ const Index = () => {
       <header className="container mx-auto px-4 py-6 relative z-10">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center glow-border">
-            <Sparkles className="w-4 h-4 text-primary" />
+            <Wand2 className="w-4 h-4 text-primary" />
           </div>
           <span className="font-semibold text-lg">Creator Studio</span>
         </div>
@@ -75,7 +75,7 @@ const Index = () => {
       <main className="container mx-auto px-4 pt-16 pb-24 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-8 animate-fade-in">
-            <Sparkles className="w-4 h-4 text-primary" />
+            <Wand2 className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-primary">
               AI-Powered Content Strategy
             </span>
@@ -174,7 +174,7 @@ const Index = () => {
             className="h-12 px-6 gap-2"
           >
             Start Creating
-            <Sparkles className="w-4 h-4" />
+            <Wand2 className="w-4 h-4" />
           </Button>
         </div>
       </main>
@@ -182,7 +182,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="container mx-auto px-4 py-8 border-t border-border/30 relative z-10">
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Sparkles className="w-4 h-4" />
+          <Wand2 className="w-4 h-4" />
           <span>Creator Studio — Strategic content, made simple</span>
         </div>
       </footer>

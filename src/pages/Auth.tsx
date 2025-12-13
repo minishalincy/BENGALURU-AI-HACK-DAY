@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Mail, Lock, User } from "lucide-react";
+import { Wand2, Mail, Lock, User } from "lucide-react";
 import { FaLinkedinIn, FaYoutube, FaInstagram } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { z } from "zod";
@@ -286,7 +286,7 @@ const Auth = () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center glow-border">
-              <Sparkles className="w-5 h-5 text-primary" />
+              <Wand2 className="w-5 h-5 text-primary" />
             </div>
             <span className="text-2xl font-semibold">Creator Studio</span>
           </div>
