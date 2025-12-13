@@ -6,11 +6,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles, ArrowRight, ArrowLeft, Check } from "lucide-react";
 
 const platforms = [
-  { id: "instagram", label: "Instagram", icon: "📸" },
-  { id: "linkedin", label: "LinkedIn", icon: "💼" },
-  { id: "youtube", label: "YouTube", icon: "🎬" },
-  { id: "twitter", label: "Twitter/X", icon: "🐦" },
-  { id: "tiktok", label: "TikTok", icon: "🎵" },
+  { id: "instagram", label: "Instagram", icon: "" },
+  { id: "linkedin", label: "LinkedIn", icon: "" },
+  { id: "youtube", label: "YouTube", icon: "" },
+  { id: "twitter", label: "Twitter/X", icon: "" },
+  { id: "tiktok", label: "TikTok", icon: "" },
 ];
 
 const goals = [
@@ -40,7 +40,9 @@ const Onboarding = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.user) {
         navigate("/auth");
         return;
@@ -127,11 +129,7 @@ const Onboarding = () => {
             <div
               key={s}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                s === step
-                  ? "w-12 bg-primary"
-                  : s < step
-                  ? "w-8 bg-primary/50"
-                  : "w-8 bg-muted"
+                s === step ? "w-12 bg-primary" : s < step ? "w-8 bg-primary/50" : "w-8 bg-muted"
               }`}
             />
           ))}
@@ -189,9 +187,7 @@ const Onboarding = () => {
                 >
                   <span className="text-2xl mb-2 block">{p.icon}</span>
                   <span className="font-medium">{p.label}</span>
-                  {platform === p.id && (
-                    <Check className="w-4 h-4 text-primary mt-2" />
-                  )}
+                  {platform === p.id && <Check className="w-4 h-4 text-primary mt-2" />}
                 </button>
               ))}
             </div>
@@ -211,9 +207,7 @@ const Onboarding = () => {
                 >
                   <span className="font-semibold block mb-1">{g.label}</span>
                   <span className="text-sm text-muted-foreground">{g.desc}</span>
-                  {goal === g.id && (
-                    <Check className="w-4 h-4 text-primary mt-2" />
-                  )}
+                  {goal === g.id && <Check className="w-4 h-4 text-primary mt-2" />}
                 </button>
               ))}
             </div>
@@ -233,9 +227,7 @@ const Onboarding = () => {
                 >
                   <span className="font-semibold block mb-1">{t.label}</span>
                   <span className="text-sm text-muted-foreground">{t.desc}</span>
-                  {tone === t.id && (
-                    <Check className="w-4 h-4 text-primary mt-2" />
-                  )}
+                  {tone === t.id && <Check className="w-4 h-4 text-primary mt-2" />}
                 </button>
               ))}
             </div>
@@ -243,31 +235,18 @@ const Onboarding = () => {
 
           {/* Navigation */}
           <div className="flex items-center justify-between mt-8 pt-6 border-t border-border/30">
-            <Button
-              variant="ghost"
-              onClick={() => setStep(step - 1)}
-              disabled={step === 1}
-              className="gap-2"
-            >
+            <Button variant="ghost" onClick={() => setStep(step - 1)} disabled={step === 1} className="gap-2">
               <ArrowLeft className="w-4 h-4" />
               Back
             </Button>
 
             {step < 4 ? (
-              <Button
-                onClick={() => setStep(step + 1)}
-                disabled={!canProceed()}
-                className="gap-2"
-              >
+              <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="gap-2">
                 Continue
                 <ArrowRight className="w-4 h-4" />
               </Button>
             ) : (
-              <Button
-                onClick={handleComplete}
-                disabled={!canProceed() || loading}
-                className="gap-2"
-              >
+              <Button onClick={handleComplete} disabled={!canProceed() || loading} className="gap-2">
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
