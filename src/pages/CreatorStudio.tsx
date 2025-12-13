@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, Wifi, WifiOff } from "lucide-react";
+import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, Wifi, WifiOff, FileText, Image, Layers, Headphones, Brain, Wand2, CheckCircle2, ArrowRight } from "lucide-react";
 import { useOfflineRecorder } from "@/hooks/useOfflineRecorder";
 import AudioWaveform from "@/components/AudioWaveform";
 import PlatformSelector from "@/components/PlatformSelector";
@@ -322,15 +322,28 @@ const CreatorStudio = () => {
         {/* Ready State */}
         {stage === 'ready' && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] animate-fade-in">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold mb-3">
-                Create Your <span className="text-gradient">Content</span>
+            {/* Hero Message */}
+            <div className="text-center mb-10">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
+                🎙️ Speak once.
               </h1>
-              <p className="text-muted-foreground text-lg max-w-md mx-auto">
-                Record audio, add context, and let AI create platform-ready posts with thumbnails.
-              </p>
+              <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-xl md:text-2xl text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Get captions.
+                </span>
+                <span className="flex items-center gap-2">
+                  <Image className="w-5 h-5 text-primary" />
+                  Get AI thumbnails.
+                </span>
+                <span className="flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-primary" />
+                  Ready to post.
+                </span>
+              </div>
             </div>
 
+            {/* Record Button */}
             <button
               onClick={handleStartRecording}
               className="group relative w-40 h-40 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-105 flex items-center justify-center glow-border"
@@ -339,9 +352,45 @@ const CreatorStudio = () => {
               <Mic className="w-16 h-16 text-primary relative z-10" />
             </button>
 
-            <p className="mt-8 text-sm text-muted-foreground">
-              Click to start recording
+            <p className="mt-6 text-sm text-muted-foreground">
+              Tap to start recording
             </p>
+
+            {/* What Will Be Created Preview */}
+            <div className="mt-10 p-5 rounded-2xl border border-border/50 bg-card/30 backdrop-blur-sm max-w-md w-full">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
+                This recording will generate:
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Platform-optimized captions</p>
+                    <p className="text-xs text-muted-foreground">Ready to copy & paste</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Image className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">AI-generated thumbnails</p>
+                    <p className="text-xs text-muted-foreground">Unique visuals for each platform</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Layers className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Multi-platform output</p>
+                    <p className="text-xs text-muted-foreground">LinkedIn, Instagram, Twitter & more</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {recorderError && (
               <p className="mt-4 text-destructive text-sm">{recorderError}</p>
@@ -377,21 +426,58 @@ const CreatorStudio = () => {
               />
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-muted-foreground' : 'bg-primary animate-pulse'}`} />
-                <span className="text-sm font-medium">Live Transcription</span>
+            {/* Live AI Activity Panel */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-muted-foreground' : 'bg-primary animate-pulse'}`} />
+                  <span className="text-sm font-medium">Live Transcription</span>
+                </div>
+                <ScrollArea className="h-40 rounded-xl border border-border/50 bg-card/30 p-4">
+                  <p className="text-sm leading-relaxed">
+                    {liveTranscript || (
+                      <span className="text-muted-foreground italic">
+                        {isPaused ? 'Recording paused...' : 'Listening for speech...'}
+                      </span>
+                    )}
+                  </p>
+                  <div ref={transcriptEndRef} />
+                </ScrollArea>
               </div>
-              <ScrollArea className="h-40 rounded-xl border border-border/50 bg-card/30 p-4">
-                <p className="text-sm leading-relaxed">
-                  {liveTranscript || (
-                    <span className="text-muted-foreground italic">
-                      {isPaused ? 'Recording paused...' : 'Listening for speech...'}
+
+              {/* AI Activity Indicators */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-primary animate-pulse" />
+                  <span className="text-sm font-medium">AI Processing</span>
+                </div>
+                <div className="h-40 rounded-xl border border-border/50 bg-card/30 p-4 space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <Headphones className={`w-4 h-4 ${!isPaused ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
+                    <span className={!isPaused ? 'text-foreground' : 'text-muted-foreground'}>
+                      {!isPaused ? 'Listening...' : 'Paused'}
                     </span>
-                  )}
-                </p>
-                <div ref={transcriptEndRef} />
-              </ScrollArea>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <FileText className={`w-4 h-4 ${liveTranscript.length > 50 ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={liveTranscript.length > 50 ? 'text-foreground' : 'text-muted-foreground'}>
+                      {liveTranscript.length > 50 ? 'Extracting key points...' : 'Waiting for content...'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <Brain className={`w-4 h-4 ${liveTranscript.length > 100 ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={liveTranscript.length > 100 ? 'text-foreground' : 'text-muted-foreground'}>
+                      {liveTranscript.length > 100 ? 'Understanding intent...' : 'Analyzing...'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <Image className={`w-4 h-4 ${liveTranscript.length > 150 ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={liveTranscript.length > 150 ? 'text-foreground' : 'text-muted-foreground'}>
+                      {liveTranscript.length > 150 ? 'Preparing thumbnails...' : 'Waiting...'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-center gap-4 pt-4">
@@ -417,22 +503,26 @@ const CreatorStudio = () => {
         {/* Additional Inputs State */}
         {stage === 'inputs' && (
           <div className="animate-slide-up space-y-8 max-w-2xl mx-auto">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold mb-2">Add More Context</h2>
+            {/* Success Message */}
+            <div className="text-center p-6 rounded-2xl bg-primary/5 border border-primary/20">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-6 h-6 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Great! Recording captured.</h2>
               <p className="text-muted-foreground">
-                Optionally add text or upload files to enhance your content
+                Let's create your content. Add any extra context if needed.
               </p>
             </div>
 
             {recordedTranscript && (
               <div className="space-y-2">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Recorded Transcript
+                  Recorded Transcript (editable)
                 </label>
                 <textarea
                   value={recordedTranscript}
                   onChange={(e) => setRecordedTranscript(e.target.value)}
-                  className="w-full min-h-[120px] p-4 rounded-xl bg-primary/5 border border-primary/20 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full min-h-[120px] p-4 rounded-xl bg-card border border-border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
                   placeholder="Your transcription will appear here..."
                 />
               </div>
@@ -449,8 +539,9 @@ const CreatorStudio = () => {
               <Button variant="outline" onClick={handleReset}>
                 Start Over
               </Button>
-              <Button onClick={handleContinueToSelect} className="px-8">
+              <Button onClick={handleContinueToSelect} className="px-8 gap-2">
                 Continue
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -471,6 +562,20 @@ const CreatorStudio = () => {
               onSelectionChange={setSelectedPlatforms}
             />
 
+            {/* Helper Text */}
+            {selectedPlatforms.length > 0 && (
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 text-center">
+                <p className="text-sm text-muted-foreground">
+                  We'll generate <span className="text-primary font-medium">captions</span> and{' '}
+                  <span className="text-primary font-medium">AI thumbnails</span> for{' '}
+                  {selectedPlatforms.length === 1 
+                    ? selectedPlatforms[0] 
+                    : `${selectedPlatforms.length} platforms`
+                  }
+                </p>
+              </div>
+            )}
+
             <div className="flex justify-center gap-4 pt-4">
               <Button variant="outline" onClick={() => setStage('inputs')}>
                 Back
@@ -478,8 +583,9 @@ const CreatorStudio = () => {
               <Button 
                 onClick={handlePlatformConfirm}
                 disabled={selectedPlatforms.length === 0}
-                className="px-8"
+                className="px-8 gap-2"
               >
+                <Wand2 className="w-4 h-4" />
                 Generate Content
               </Button>
             </div>
@@ -490,12 +596,59 @@ const CreatorStudio = () => {
         {stage === 'processing' && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
             <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mb-8">
-              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              <Wand2 className="w-12 h-12 text-primary animate-pulse" />
             </div>
-            <h2 className="text-2xl font-semibold mb-2">Creating Your Content</h2>
-            <p className="text-muted-foreground">{processingStatus}</p>
-            <p className="text-xs text-muted-foreground mt-4">
-              Generating thumbnails for {selectedPlatforms.length} platform{selectedPlatforms.length > 1 ? 's' : ''}...
+            <h2 className="text-2xl font-semibold mb-4">Creating Your Content</h2>
+            
+            {/* Named Processing Steps */}
+            <div className="space-y-3 text-left max-w-xs">
+              <div className="flex items-center gap-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                  processingStatus.includes('audio') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {processingStatus.includes('audio') ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                </div>
+                <span className={processingStatus.includes('audio') ? 'text-foreground' : 'text-muted-foreground'}>
+                  Uploading audio...
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                  processingStatus.includes('transcription') ? 'bg-primary text-primary-foreground' : 
+                  processingStatus.includes('AI') || processingStatus.includes('Generating') ? 'bg-muted text-muted-foreground' : 'bg-muted/50 text-muted-foreground/50'
+                }`}>
+                  {processingStatus.includes('transcription') ? <Loader2 className="w-3 h-3 animate-spin" /> : 
+                   processingStatus.includes('AI') || processingStatus.includes('Generating') ? <CheckCircle2 className="w-3 h-3" /> : <span className="w-3 h-3" />}
+                </div>
+                <span className={processingStatus.includes('transcription') ? 'text-foreground' : 
+                  processingStatus.includes('AI') || processingStatus.includes('Generating') ? 'text-muted-foreground' : 'text-muted-foreground/50'}>
+                  Processing transcription...
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                  processingStatus.includes('AI') || processingStatus.includes('caption') ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground/50'
+                }`}>
+                  {processingStatus.includes('AI') || processingStatus.includes('caption') ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="w-3 h-3" />}
+                </div>
+                <span className={processingStatus.includes('AI') || processingStatus.includes('caption') ? 'text-foreground' : 'text-muted-foreground/50'}>
+                  Generating captions...
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                  processingStatus.includes('thumbnail') ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground/50'
+                }`}>
+                  {processingStatus.includes('thumbnail') ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="w-3 h-3" />}
+                </div>
+                <span className={processingStatus.includes('thumbnail') ? 'text-foreground' : 'text-muted-foreground/50'}>
+                  Generating thumbnails...
+                </span>
+              </div>
+            </div>
+            
+            <p className="text-xs text-muted-foreground mt-6">
+              Creating content for {selectedPlatforms.join(', ')}
             </p>
           </div>
         )}
