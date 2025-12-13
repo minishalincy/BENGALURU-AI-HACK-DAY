@@ -87,14 +87,17 @@ export type Database = {
       }
       event_recordings: {
         Row: {
+          additional_context: string | null
           audio_url: string | null
           created_at: string
           duration_seconds: number | null
           event_title: string | null
+          generated_content: Json | null
           id: string
           insights: Json | null
           instagram_caption: string | null
           linkedin_post: string | null
+          platforms: string[] | null
           status: string
           transcription: string | null
           twitter_thread: string | null
@@ -102,14 +105,17 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          additional_context?: string | null
           audio_url?: string | null
           created_at?: string
           duration_seconds?: number | null
           event_title?: string | null
+          generated_content?: Json | null
           id?: string
           insights?: Json | null
           instagram_caption?: string | null
           linkedin_post?: string | null
+          platforms?: string[] | null
           status?: string
           transcription?: string | null
           twitter_thread?: string | null
@@ -117,14 +123,17 @@ export type Database = {
           user_id: string
         }
         Update: {
+          additional_context?: string | null
           audio_url?: string | null
           created_at?: string
           duration_seconds?: number | null
           event_title?: string | null
+          generated_content?: Json | null
           id?: string
           insights?: Json | null
           instagram_caption?: string | null
           linkedin_post?: string | null
+          platforms?: string[] | null
           status?: string
           transcription?: string | null
           twitter_thread?: string | null
