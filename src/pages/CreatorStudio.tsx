@@ -664,19 +664,35 @@ const CreatorStudio = () => {
               </p>
             </div>
 
-            {recordedTranscript && (
-              <div className="space-y-2">
+            {/* Always show transcript editor - even if empty so user can type manually */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Recorded Transcript (editable)
+                  Recorded Transcript
                 </label>
+                <span className="text-xs text-muted-foreground">
+                  {recordedTranscript ? `${recordedTranscript.split(' ').filter(w => w).length} words` : 'No audio detected'}
+                </span>
+              </div>
+              <div className="relative">
                 <textarea
                   value={recordedTranscript}
                   onChange={(e) => setRecordedTranscript(e.target.value)}
-                  className="w-full min-h-[120px] p-4 rounded-xl bg-card border border-border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="Your transcription will appear here..."
+                  className="w-full min-h-[150px] p-4 rounded-xl bg-card border border-border text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/30 leading-relaxed"
+                  placeholder={recordedTranscript ? "" : "No speech was detected. You can type or paste your content here manually, or try recording again with clearer audio."}
                 />
+                {!recordedTranscript && (
+                  <div className="absolute top-4 left-4 right-4 pointer-events-none">
+                    <p className="text-sm text-muted-foreground/70">
+                      Tip: Speak clearly near the microphone. If detection fails, you can type your content directly.
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+              <p className="text-xs text-muted-foreground">
+                Edit the transcript above to correct any errors before generating content.
+              </p>
+            </div>
 
             <ContentInputs
               additionalContext={additionalContext}
