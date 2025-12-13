@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Mail, Lock, User } from "lucide-react";
+import { FaLinkedinIn, FaYoutube, FaInstagram } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import { z } from "zod";
 
 const signInSchema = z.object({
@@ -466,7 +468,7 @@ const Auth = () => {
             </Button>
           </form>
 
-          {/* Toggle Sign In / Sign Up */}
+        {/* Toggle Sign In / Sign Up */}
           <div className="mt-6 text-center">
             <button
               type="button"
@@ -482,12 +484,33 @@ const Auth = () => {
                   <span className="text-primary font-medium">Create Account</span>
                 </>
               ) : (
-                <>
+              <>
                   Already have an account?{" "}
                   <span className="text-primary font-medium">Sign In</span>
                 </>
               )}
             </button>
+          </div>
+
+          {/* Platform Icons */}
+          <div className="mt-8 pt-6 border-t border-border/50">
+            <p className="text-xs text-muted-foreground text-center mb-4">
+              Create content for your favorite platforms
+            </p>
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-secondary/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <FaLinkedinIn className="w-4 h-4" />
+              </div>
+              <div className="w-10 h-10 rounded-full bg-secondary/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <FaYoutube className="w-4 h-4" />
+              </div>
+              <div className="w-10 h-10 rounded-full bg-secondary/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <FaInstagram className="w-4 h-4" />
+              </div>
+              <div className="w-10 h-10 rounded-full bg-secondary/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <FaXTwitter className="w-4 h-4" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
