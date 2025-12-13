@@ -100,9 +100,6 @@ const Index = () => {
               Get Started Free
               <ArrowRight className="w-5 h-5" />
             </Button>
-            <p className="text-sm text-muted-foreground">
-              No credit card required
-            </p>
           </div>
         </div>
 
