@@ -161,6 +161,7 @@ export function useOfflineRecorder(): UseOfflineRecorderReturn {
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
+        recognition.maxAlternatives = 1;
 
         recognition.onresult = (event: any) => {
           let interim = '';
@@ -183,21 +184,48 @@ export function useOfflineRecorder(): UseOfflineRecorderReturn {
         };
 
         recognition.onerror = (event: any) => {
-          if (event.error !== 'no-speech' && event.error !== 'network') {
-            console.error('Speech recognition error:', event.error);
+          console.log('Speech recognition event:', event.error);
+          // Only restart for recoverable errors
+          if (event.error === 'no-speech' || event.error === 'aborted') {
+            // These are normal, just try to restart
+            if (mediaRecorderRef.current?.state === 'recording' && recognitionRef.current) {
+              setTimeout(() => {
+                try {
+                  recognitionRef.current?.start();
+                } catch (e) {
+                  console.log('Could not restart speech recognition');
+                }
+              }, 100);
+            }
+          } else if (event.error === 'network') {
+            console.log('Network error in speech recognition - will continue with audio recording');
+          } else if (event.error === 'not-allowed') {
+            setError('Microphone access denied. Please allow microphone permissions.');
           }
         };
 
         recognition.onend = () => {
-          if (isRecording && !isPaused && recognitionRef.current) {
-            try {
-              recognitionRef.current.start();
-            } catch (e) {}
+          // Auto-restart if still recording
+          if (mediaRecorderRef.current?.state === 'recording' && recognitionRef.current) {
+            setTimeout(() => {
+              try {
+                recognitionRef.current?.start();
+              } catch (e) {
+                console.log('Speech recognition ended and could not restart');
+              }
+            }, 100);
           }
         };
 
         recognitionRef.current = recognition;
-        recognition.start();
+        try {
+          recognition.start();
+          console.log('Speech recognition started');
+        } catch (e) {
+          console.log('Could not start speech recognition:', e);
+        }
+      } else {
+        console.log('Speech recognition not supported in this browser');
       }
 
       startTimeRef.current = Date.now();
