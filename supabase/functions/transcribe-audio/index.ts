@@ -42,8 +42,8 @@ serve(async (req) => {
 
     console.log('Sending audio to Gemini for transcription...');
 
-    // Use Gemini's multimodal capability to transcribe audio
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Step 1: Initial transcription with acronym awareness
+    const transcriptionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -57,7 +57,23 @@ serve(async (req) => {
             content: [
               {
                 type: "text",
-                text: "Please transcribe this audio recording completely and accurately. Include all spoken content, but clean up filler words like 'um', 'uh', 'like' etc. Format the transcription as clean, readable paragraphs. If there are multiple speakers, try to indicate speaker changes with line breaks. Only output the transcription, no additional commentary."
+                text: `Transcribe this audio recording with high accuracy. Follow these rules:
+
+1. ACRONYM DETECTION: When speakers pronounce individual letters (like "R O I", "G D P", "C A C"), preserve them as uppercase acronyms (ROI, GDP, CAC).
+
+2. COMMON ABBREVIATIONS: Detect and correctly format common abbreviations:
+   - Business: ROI, CAC, LTV, KPI, OKR, B2B, B2C, SaaS, MVP, IPO, CEO, CFO, CTO, CMO
+   - Tech: API, SDK, UI, UX, HTML, CSS, JS, AI, ML, SaaS, CRM, ERP
+   - Academic: PhD, MBA, BA, MA, GPA
+   - Metrics: YoY, MoM, QoQ, ARR, MRR, NPS, CAGR
+   
+3. Clean up filler words (um, uh, like, you know) while preserving meaning.
+
+4. Format as clean paragraphs. Indicate speaker changes with line breaks.
+
+5. Keep technical terms and industry jargon intact.
+
+Output ONLY the transcription, no commentary.`
               },
               {
                 type: "input_audio",
@@ -72,28 +88,85 @@ serve(async (req) => {
       }),
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    if (!transcriptionResponse.ok) {
+      if (transcriptionResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (response.status === 402) {
+      if (transcriptionResponse.status === 402) {
         return new Response(JSON.stringify({ error: "AI usage limit reached. Please add credits to continue." }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      const errorText = await response.text();
-      console.error('Transcription API error:', response.status, errorText);
+      const errorText = await transcriptionResponse.text();
+      console.error('Transcription API error:', transcriptionResponse.status, errorText);
       throw new Error('Failed to transcribe audio');
     }
 
-    const data = await response.json();
-    const transcription = data.choices?.[0]?.message?.content || '';
+    const transcriptionData = await transcriptionResponse.json();
+    let transcription = transcriptionData.choices?.[0]?.message?.content || '';
 
-    console.log('Transcription completed. Length:', transcription.length);
+    console.log('Initial transcription completed. Length:', transcription.length);
+
+    // Step 2: AI Post-Processing for acronym correction and cleanup
+    if (transcription.length > 0) {
+      console.log('Running AI post-processing for acronym correction...');
+      
+      const postProcessResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: `You are a transcription post-processor. Your job is to:
+
+1. DETECT AND FIX ACRONYMS: Find any spelled-out letters that should be acronyms and convert them:
+   - "r o i" or "R O I" or "return on investment" when used as a metric → ROI
+   - "g d p" or "G D P" → GDP
+   - "c a c" or "customer acquisition cost" → CAC
+   - Individual letters spoken together → Uppercase acronym
+
+2. CONTEXT-AWARE CORRECTION: Use surrounding context to determine if something is:
+   - An abbreviation (format as uppercase: MBA, PhD, CEO)
+   - A regular word (keep as-is)
+   - A misheard word (correct based on context)
+
+3. PRESERVE INTENT: Keep the speaker's meaning intact while improving readability.
+
+4. FORMAT CLEANLY: Ensure proper capitalization, punctuation, and paragraph breaks.
+
+Output ONLY the corrected transcription, nothing else.`
+            },
+            {
+              role: "user",
+              content: `Please post-process and correct this transcription, focusing on properly formatting acronyms and abbreviations:\n\n${transcription}`
+            }
+          ],
+        }),
+      });
+
+      if (postProcessResponse.ok) {
+        const postProcessData = await postProcessResponse.json();
+        const correctedTranscription = postProcessData.choices?.[0]?.message?.content;
+        
+        if (correctedTranscription && correctedTranscription.length > 0) {
+          transcription = correctedTranscription;
+          console.log('Post-processing completed. Final length:', transcription.length);
+        }
+      } else {
+        console.log('Post-processing skipped due to API error, using initial transcription');
+      }
+    }
+
+    console.log('Final transcription ready');
 
     return new Response(JSON.stringify({ transcription }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
