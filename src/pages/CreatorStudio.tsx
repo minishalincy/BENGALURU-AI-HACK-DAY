@@ -306,13 +306,13 @@ const CreatorStudio = () => {
 
             {/* My Creations Link */}
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="sm" 
               onClick={() => navigate("/creations")}
-              className="gap-2"
+              className="gap-2 border-primary/30 hover:bg-primary/10"
             >
               <FolderOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">My Creations</span>
+              My Creations
             </Button>
 
             <DropdownMenu>
