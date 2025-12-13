@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
-import { Check, Plus, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Check, X } from 'lucide-react';
 
 const SUGGESTED_PLATFORMS = [
-  { id: 'linkedin', name: 'LinkedIn', icon: '💼' },
-  { id: 'instagram', name: 'Instagram', icon: '📸' },
-  { id: 'twitter', name: 'Twitter/X', icon: '🐦' },
-  { id: 'youtube', name: 'YouTube', icon: '🎬' },
-  { id: 'tiktok', name: 'TikTok', icon: '🎵' },
-  { id: 'facebook', name: 'Facebook', icon: '👥' },
-  { id: 'threads', name: 'Threads', icon: '🧵' },
-  { id: 'medium', name: 'Medium', icon: '📝' },
+  { id: 'linkedin', name: 'LinkedIn' },
+  { id: 'instagram', name: 'Instagram' },
+  { id: 'twitter', name: 'Twitter/X' },
+  { id: 'youtube', name: 'YouTube' },
+  { id: 'tiktok', name: 'TikTok' },
+  { id: 'facebook', name: 'Facebook' },
+  { id: 'threads', name: 'Threads' },
+  { id: 'medium', name: 'Medium' },
 ];
 
 interface PlatformSelectorProps {
@@ -23,7 +21,6 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({
   selectedPlatforms,
   onSelectionChange
 }) => {
-  const [customPlatform, setCustomPlatform] = useState('');
   const [customPlatforms, setCustomPlatforms] = useState<string[]>([]);
 
   const togglePlatform = (platformId: string) => {
@@ -34,25 +31,9 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({
     }
   };
 
-  const addCustomPlatform = () => {
-    const trimmed = customPlatform.trim();
-    if (trimmed && !selectedPlatforms.includes(trimmed.toLowerCase()) && !customPlatforms.includes(trimmed)) {
-      setCustomPlatforms([...customPlatforms, trimmed]);
-      onSelectionChange([...selectedPlatforms, trimmed.toLowerCase()]);
-      setCustomPlatform('');
-    }
-  };
-
   const removeCustomPlatform = (platform: string) => {
     setCustomPlatforms(customPlatforms.filter(p => p !== platform));
     onSelectionChange(selectedPlatforms.filter(p => p !== platform.toLowerCase()));
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addCustomPlatform();
-    }
   };
 
   return (
@@ -71,7 +52,6 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({
                   : 'border-border/50 bg-card/50 hover:bg-card hover:border-border'
               }`}
             >
-              <div className="text-2xl mb-2">{platform.icon}</div>
               <div className="font-medium text-sm">{platform.name}</div>
               {isSelected && (
                 <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
@@ -102,26 +82,6 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({
           ))}
         </div>
       )}
-
-      {/* Add Custom Platform */}
-      <div className="flex gap-2">
-        <Input
-          type="text"
-          placeholder="Add any platform or website..."
-          value={customPlatform}
-          onChange={(e) => setCustomPlatform(e.target.value)}
-          onKeyPress={handleKeyPress}
-          className="flex-1 bg-card/50 border-border/50"
-        />
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={addCustomPlatform}
-          disabled={!customPlatform.trim()}
-        >
-          <Plus className="w-4 h-4" />
-        </Button>
-      </div>
 
       {/* Selection Summary */}
       {selectedPlatforms.length > 0 && (
