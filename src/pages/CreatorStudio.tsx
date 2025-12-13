@@ -400,42 +400,37 @@ const CreatorStudio = () => {
               Works offline • Auto-saves • No notes needed
             </p>
 
-            {/* What Happens After Recording */}
-            <div className="w-full max-w-lg">
-              <div className="relative">
-                {/* Connection line */}
-                <div className="absolute left-6 top-8 bottom-8 w-px bg-gradient-to-b from-primary/50 via-primary/30 to-primary/10 hidden sm:block" />
+            {/* What Happens After Recording - Horizontal */}
+            <div className="w-full max-w-3xl">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="group p-5 rounded-2xl bg-card/40 border border-border/50 backdrop-blur-sm hover:border-primary/30 transition-all duration-300 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
+                    <Zap className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-base mb-1.5">Transcription</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Speech converted to text in real-time
+                  </p>
+                </div>
                 
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 relative z-10">
-                      <Zap className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="pt-1">
-                      <p className="font-medium text-sm">Automatic transcription</p>
-                      <p className="text-xs text-muted-foreground">Your speech is converted to text in real-time</p>
-                    </div>
+                <div className="group p-5 rounded-2xl bg-card/40 border border-border/50 backdrop-blur-sm hover:border-primary/30 transition-all duration-300 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
+                    <FileText className="w-5 h-5 text-primary" />
                   </div>
-                  
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 relative z-10">
-                      <FileText className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="pt-1">
-                      <p className="font-medium text-sm">Platform-ready captions</p>
-                      <p className="text-xs text-muted-foreground">Optimized for LinkedIn, Instagram, Twitter & more</p>
-                    </div>
+                  <h3 className="font-semibold text-base mb-1.5">Captions</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Optimized for LinkedIn, Instagram & more
+                  </p>
+                </div>
+                
+                <div className="group p-5 rounded-2xl bg-card/40 border border-border/50 backdrop-blur-sm hover:border-primary/30 transition-all duration-300 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
+                    <Image className="w-5 h-5 text-primary" />
                   </div>
-                  
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 relative z-10">
-                      <Image className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="pt-1">
-                      <p className="font-medium text-sm">AI-generated visuals</p>
-                      <p className="text-xs text-muted-foreground">Thumbnails and graphics to match your content</p>
-                    </div>
-                  </div>
+                  <h3 className="font-semibold text-base mb-1.5">Visuals</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    AI thumbnails to match your content
+                  </p>
                 </div>
               </div>
             </div>
