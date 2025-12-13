@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, Wifi, WifiOff, FileText, Image, Layers, Headphones, Brain, Wand2, CheckCircle2, ArrowRight, FolderOpen, Zap, Users, Presentation, Lightbulb, MessageSquare, Target, ThumbsUp } from "lucide-react";
+import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, FileText, Image, Headphones, Brain, Wand2, CheckCircle2, ArrowRight, FolderOpen, Zap, Users, Presentation, Lightbulb, MessageSquare, Target, ThumbsUp } from "lucide-react";
 import { useOfflineRecorder } from "@/hooks/useOfflineRecorder";
 import AudioWaveform from "@/components/AudioWaveform";
 import PlatformSelector from "@/components/PlatformSelector";
@@ -315,36 +315,29 @@ const CreatorStudio = () => {
   return (
     <BeamsBackground intensity="medium" className="min-h-screen flex flex-col">
 
-      {/* Top Bar */}
-      <header className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
+      {/* Top Bar - Minimal */}
+      <header className="border-b border-border/30 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
-            <span className="font-semibold text-lg">Creator Studio</span>
+            <span className="font-semibold text-lg tracking-tight">Creator Studio</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Connection Status */}
-            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
-              isOnline ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
-            }`}>
-              {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-              {isOnline ? 'Online' : 'Offline'}
-            </div>
-
+          <div className="flex items-center gap-2">
             {/* My Creations Link */}
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm" 
               onClick={() => navigate("/creations")}
-              className="gap-2 border-primary/30 hover:bg-primary/10"
+              className="gap-2 text-muted-foreground hover:text-foreground"
             >
               <FolderOpen className="w-4 h-4" />
-              My Creations
+              <span className="hidden sm:inline">My Creations</span>
             </Button>
 
+            {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
@@ -522,11 +515,6 @@ const CreatorStudio = () => {
                 }`}>
                   {creationMode === 'speaker' ? 'Speaker Mode' : 'Creator Mode'}
                 </span>
-                {!isOnline && (
-                  <span className="text-xs text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
-                    Offline mode
-                  </span>
-                )}
               </div>
               <div className="text-3xl font-mono font-bold text-primary">
                 {formatDuration(duration)}
