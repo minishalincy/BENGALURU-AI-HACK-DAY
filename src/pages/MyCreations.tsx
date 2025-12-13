@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, ArrowLeft, Image, FileText, Calendar, 
   Copy, Download, ExternalLink, Sparkles, User, LogOut,
-  Clock, Layers
+  Clock, Layers, MessageSquare, Presentation, Target
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BeamsBackground } from "@/components/ui/beams-background";
@@ -29,6 +29,12 @@ interface PlatformContent {
   thumbnailUrl?: string;
 }
 
+interface RecommendedPlatform {
+  platform: string;
+  reason: string;
+  score: number;
+}
+
 interface Creation {
   id: string;
   created_at: string;
@@ -37,6 +43,9 @@ interface Creation {
   generated_content: PlatformContent[];
   additional_context: string | null;
   duration_seconds: number | null;
+  creation_mode: string | null;
+  key_takeaways: string[] | null;
+  recommended_platforms: RecommendedPlatform[] | null;
 }
 
 const MyCreations = () => {
@@ -67,7 +76,7 @@ const MyCreations = () => {
 
       const { data, error } = await supabase
         .from("event_recordings")
-        .select("id, created_at, transcription, platforms, generated_content, additional_context, duration_seconds")
+        .select("id, created_at, transcription, platforms, generated_content, additional_context, duration_seconds, creation_mode, key_takeaways, recommended_platforms")
         .eq("user_id", session.user.id)
         .eq("status", "completed")
         .order("created_at", { ascending: false });
@@ -80,7 +89,9 @@ const MyCreations = () => {
         .map(item => ({
           ...item,
           platforms: item.platforms || [],
-          generated_content: item.generated_content as unknown as PlatformContent[]
+          generated_content: item.generated_content as unknown as PlatformContent[],
+          key_takeaways: item.key_takeaways as unknown as string[] | null,
+          recommended_platforms: item.recommended_platforms as unknown as RecommendedPlatform[] | null
         }));
 
       setCreations(validCreations);
@@ -106,6 +117,14 @@ const MyCreations = () => {
     toast({
       title: "Copied!",
       description: `${platform} caption copied to clipboard.`
+    });
+  };
+
+  const copyTakeaways = (takeaways: string[]) => {
+    navigator.clipboard.writeText(takeaways.join('\n• '));
+    toast({
+      title: "Copied!",
+      description: "Key takeaways copied to clipboard."
     });
   };
 
@@ -224,6 +243,19 @@ const MyCreations = () => {
                       </div>
                     )}
                     
+                    {/* Mode badge */}
+                    {creation.creation_mode && (
+                      <div className="absolute top-2 right-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full backdrop-blur-sm ${
+                          creation.creation_mode === 'speaker'
+                            ? 'bg-blue-500/20 text-blue-300'
+                            : 'bg-primary/20 text-primary'
+                        }`}>
+                          {creation.creation_mode === 'speaker' ? 'Speaker' : 'Creator'}
+                        </span>
+                      </div>
+                    )}
+                    
                     {/* Platform badges */}
                     <div className="absolute bottom-2 left-2 flex gap-1">
                       {creation.platforms.slice(0, 3).map((platform) => (
@@ -275,6 +307,15 @@ const MyCreations = () => {
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-primary" />
               Creation Details
+              {selectedCreation?.creation_mode && (
+                <span className={`text-xs px-2 py-0.5 rounded-full ml-2 ${
+                  selectedCreation.creation_mode === 'speaker'
+                    ? 'bg-blue-500/10 text-blue-500'
+                    : 'bg-primary/10 text-primary'
+                }`}>
+                  {selectedCreation.creation_mode === 'speaker' ? 'Speaker Mode' : 'Creator Mode'}
+                </span>
+              )}
             </DialogTitle>
           </DialogHeader>
           
@@ -294,6 +335,57 @@ const MyCreations = () => {
                     </span>
                   )}
                 </div>
+
+                {/* Key Takeaways */}
+                {selectedCreation.key_takeaways && selectedCreation.key_takeaways.length > 0 && (
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-primary" />
+                        <h4 className="font-medium">Key Takeaways</h4>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => copyTakeaways(selectedCreation.key_takeaways!)}
+                      >
+                        <Copy className="w-4 h-4 mr-1" />
+                        Copy
+                      </Button>
+                    </div>
+                    <ul className="space-y-2">
+                      {selectedCreation.key_takeaways.map((takeaway, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center">
+                            {idx + 1}
+                          </span>
+                          <span className="text-sm">{takeaway}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Recommended Platforms */}
+                {selectedCreation.recommended_platforms && selectedCreation.recommended_platforms.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-muted-foreground" />
+                      <h4 className="text-sm font-medium text-muted-foreground">AI Platform Recommendations</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedCreation.recommended_platforms.map((rec, idx) => (
+                        <div 
+                          key={idx}
+                          className="px-3 py-2 rounded-lg bg-muted/30 border border-border/50"
+                        >
+                          <span className="font-medium text-sm">{rec.platform}</span>
+                          <p className="text-xs text-muted-foreground">{rec.reason}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Original transcript */}
                 {selectedCreation.transcription && (
