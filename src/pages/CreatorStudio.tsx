@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, Wifi, WifiOff, FileText, Image, Layers, Headphones, Brain, Wand2, CheckCircle2, ArrowRight, FolderOpen } from "lucide-react";
+import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, Wifi, WifiOff, FileText, Image, Layers, Headphones, Brain, Wand2, CheckCircle2, ArrowRight, FolderOpen, Zap, Users, Presentation, Lightbulb } from "lucide-react";
 import { useOfflineRecorder } from "@/hooks/useOfflineRecorder";
 import AudioWaveform from "@/components/AudioWaveform";
 import PlatformSelector from "@/components/PlatformSelector";
@@ -342,78 +342,106 @@ const CreatorStudio = () => {
         {/* Ready State */}
         {stage === 'ready' && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] animate-fade-in">
-            {/* Hero Message */}
-            <div className="text-center mb-10">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
-                🎙️ Speak once.
+            
+            {/* Hero Section */}
+            <div className="text-center mb-8 max-w-2xl">
+              <p className="text-primary font-medium text-sm uppercase tracking-wider mb-3">
+                Knowledge Capture Studio
+              </p>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight tracking-tight">
+                Record your voice.
+                <br />
+                <span className="text-primary">Get ready-to-share content.</span>
               </h1>
-              <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-xl md:text-2xl text-muted-foreground">
-                <span className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  Get captions.
-                </span>
-                <span className="flex items-center gap-2">
-                  <Image className="w-5 h-5 text-primary" />
-                  Get AI thumbnails.
-                </span>
-                <span className="flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-primary" />
-                  Ready to post.
-                </span>
-              </div>
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                Capture talks, workshops, meetings, or ideas — and instantly transform them into polished posts, summaries, and visuals.
+              </p>
+            </div>
+
+            {/* Use Cases - Who This Is For */}
+            <div className="flex flex-wrap justify-center gap-2 mb-10 max-w-xl">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/50 border border-border/50 text-xs text-muted-foreground">
+                <Presentation className="w-3 h-3" />
+                Speakers & Founders
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/50 border border-border/50 text-xs text-muted-foreground">
+                <Users className="w-3 h-3" />
+                Workshop Attendees
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/50 border border-border/50 text-xs text-muted-foreground">
+                <Lightbulb className="w-3 h-3" />
+                Content Creators
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/50 border border-border/50 text-xs text-muted-foreground">
+                <Headphones className="w-3 h-3" />
+                Anyone Who Listens
+              </span>
             </div>
 
             {/* Record Button */}
-            <button
-              onClick={handleStartRecording}
-              className="group relative w-40 h-40 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-105 flex items-center justify-center glow-border"
-            >
-              <div className="absolute inset-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors" />
-              <Mic className="w-16 h-16 text-primary relative z-10" />
-            </button>
+            <div className="relative mb-6">
+              <button
+                onClick={handleStartRecording}
+                className="group relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/40 hover:border-primary transition-all duration-300 hover:scale-105 flex items-center justify-center shadow-lg shadow-primary/10 hover:shadow-primary/20"
+              >
+                <div className="absolute inset-3 rounded-full bg-gradient-to-br from-primary/15 to-transparent group-hover:from-primary/25 transition-colors" />
+                <Mic className="w-14 h-14 sm:w-16 sm:h-16 text-primary relative z-10" />
+              </button>
+              
+              {/* Animated ring */}
+              <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-ping opacity-30 pointer-events-none" style={{ animationDuration: '2s' }} />
+            </div>
 
-            <p className="mt-6 text-sm text-muted-foreground">
+            {/* Microcopy */}
+            <p className="text-sm font-medium text-foreground mb-1">
               Tap to start recording
             </p>
+            <p className="text-xs text-muted-foreground mb-10">
+              Works offline • Auto-saves • No notes needed
+            </p>
 
-            {/* What Will Be Created Preview */}
-            <div className="mt-10 p-5 rounded-2xl border border-border/50 bg-card/30 backdrop-blur-sm max-w-md w-full">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                This recording will generate:
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-primary" />
+            {/* What Happens After Recording */}
+            <div className="w-full max-w-lg">
+              <div className="relative">
+                {/* Connection line */}
+                <div className="absolute left-6 top-8 bottom-8 w-px bg-gradient-to-b from-primary/50 via-primary/30 to-primary/10 hidden sm:block" />
+                
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 relative z-10">
+                      <Zap className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="pt-1">
+                      <p className="font-medium text-sm">Automatic transcription</p>
+                      <p className="text-xs text-muted-foreground">Your speech is converted to text in real-time</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">Platform-optimized captions</p>
-                    <p className="text-xs text-muted-foreground">Ready to copy & paste</p>
+                  
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 relative z-10">
+                      <FileText className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="pt-1">
+                      <p className="font-medium text-sm">Platform-ready captions</p>
+                      <p className="text-xs text-muted-foreground">Optimized for LinkedIn, Instagram, Twitter & more</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Image className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">AI-generated thumbnails</p>
-                    <p className="text-xs text-muted-foreground">Unique visuals for each platform</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Layers className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Multi-platform output</p>
-                    <p className="text-xs text-muted-foreground">LinkedIn, Instagram, Twitter & more</p>
+                  
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 relative z-10">
+                      <Image className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="pt-1">
+                      <p className="font-medium text-sm">AI-generated visuals</p>
+                      <p className="text-xs text-muted-foreground">Thumbnails and graphics to match your content</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             {recorderError && (
-              <p className="mt-4 text-destructive text-sm">{recorderError}</p>
+              <p className="mt-6 text-destructive text-sm">{recorderError}</p>
             )}
           </div>
         )}
