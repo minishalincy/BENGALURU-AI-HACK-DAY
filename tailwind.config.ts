@@ -88,10 +88,40 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "loader-circle": {
+          "0%": {
+            transform: "rotate(90deg)",
+            boxShadow: "0 6px 12px 0 #38bdf8 inset, 0 12px 18px 0 #005dff inset, 0 36px 36px 0 #1e40af inset, 0 0 3px 1.2px rgba(56, 189, 248, 0.3), 0 0 6px 1.8px rgba(0, 93, 255, 0.2)",
+          },
+          "50%": {
+            transform: "rotate(270deg)",
+            boxShadow: "0 6px 12px 0 #60a5fa inset, 0 12px 6px 0 #0284c7 inset, 0 24px 36px 0 #005dff inset, 0 0 3px 1.2px rgba(56, 189, 248, 0.3), 0 0 6px 1.8px rgba(0, 93, 255, 0.2)",
+          },
+          "100%": {
+            transform: "rotate(450deg)",
+            boxShadow: "0 6px 12px 0 #4dc8fd inset, 0 12px 18px 0 #005dff inset, 0 36px 36px 0 #1e40af inset, 0 0 3px 1.2px rgba(56, 189, 248, 0.3), 0 0 6px 1.8px rgba(0, 93, 255, 0.2)",
+          },
+        },
+        "loader-letter": {
+          "0%, 100%": {
+            opacity: "0.4",
+            transform: "translateY(0)",
+          },
+          "20%": {
+            opacity: "1",
+            transform: "scale(1.15)",
+          },
+          "40%": {
+            opacity: "0.7",
+            transform: "translateY(0)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "loader-circle": "loader-circle 5s linear infinite",
+        "loader-letter": "loader-letter 3s infinite",
       },
     },
   },
