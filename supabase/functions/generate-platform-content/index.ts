@@ -7,6 +7,58 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function generateThumbnail(prompt: string, platform: string, apiKey: string): Promise<string | null> {
+  try {
+    console.log(`Generating thumbnail for ${platform}`);
+    
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image-preview",
+        messages: [
+          {
+            role: "user",
+            content: `Create a professional, eye-catching thumbnail image for ${platform}. 
+            
+The thumbnail should be:
+- Visually striking and attention-grabbing
+- Suitable for ${platform}'s format and audience
+- Modern and clean design
+- Without any text overlays
+
+Context: ${prompt}
+
+Create the image now.`
+          }
+        ],
+        modalities: ["image", "text"]
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Image generation error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    if (imageUrl) {
+      console.log(`Thumbnail generated for ${platform}`);
+      return imageUrl;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Thumbnail generation error:', error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -36,23 +88,35 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { recordingId, transcription, userProfile, platforms } = await req.json();
+    const { recordingId, transcription, additionalContext, userProfile, platforms, uploadedFileDescriptions } = await req.json();
 
-    if (!recordingId || !transcription || !platforms || platforms.length === 0) {
-      throw new Error('Recording ID, transcription, and platforms are required');
+    if (!recordingId || !platforms || platforms.length === 0) {
+      throw new Error('Recording ID and platforms are required');
     }
 
+    const contentSource = transcription || additionalContext || 'No content provided';
     console.log('Generating content for platforms:', platforms);
-    console.log('Transcription length:', transcription.length);
 
     const niche = userProfile?.niche || 'general content';
     const goal = userProfile?.long_term_goal || 'engage audience';
     const tone = userProfile?.tone || 'professional';
 
-    // Generate content for all platforms in one AI call
     const platformsList = platforms.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(', ');
     
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Build context from all inputs
+    let fullContext = '';
+    if (transcription) {
+      fullContext += `AUDIO TRANSCRIPTION:\n${transcription}\n\n`;
+    }
+    if (additionalContext) {
+      fullContext += `ADDITIONAL CONTEXT:\n${additionalContext}\n\n`;
+    }
+    if (uploadedFileDescriptions && uploadedFileDescriptions.length > 0) {
+      fullContext += `UPLOADED FILES:\n${uploadedFileDescriptions.join('\n')}\n\n`;
+    }
+
+    // Generate captions
+    const captionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -63,7 +127,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an expert social media content creator. Your job is to transform audio transcriptions into platform-ready posts.
+            content: `You are an expert social media content creator. Create platform-ready posts.
 
 Creator Profile:
 - Niche: ${niche}
@@ -71,60 +135,64 @@ Creator Profile:
 - Tone: ${tone}
 
 Guidelines:
-- Create content that feels authentic to the creator's voice
+- Create authentic content matching the creator's voice
 - Optimize for each platform's algorithm and format
-- Include appropriate emojis and formatting for each platform
-- Generate a thumbnail concept for visual platforms
-- Content should be ready to post with minimal editing
+- Include appropriate emojis and formatting
+- Content should be ready to post immediately
+- Generate a brief thumbnail concept for each platform
 
-IMPORTANT: Output valid JSON only, no markdown.`
+IMPORTANT: Output valid JSON only.`
           },
           {
             role: "user",
-            content: `Create platform-specific content from this transcription.
+            content: `Create platform-specific content from this input.
 
-TRANSCRIPTION:
-${transcription}
+${fullContext}
 
 PLATFORMS: ${platformsList}
 
-Return a JSON object with this exact structure:
+Return JSON with this structure:
 {
   "platforms": [
     {
       "platform": "platform_name",
-      "caption": "The full post/caption text ready to publish. Include line breaks (\\n) where appropriate. Use relevant hashtags for Instagram/TikTok. Keep Twitter under 280 chars.",
-      "thumbnailConcept": "A brief description of a thumbnail or visual that would work well with this post (2-3 sentences)"
+      "caption": "Full post text ready to publish with line breaks (\\n) and hashtags where appropriate",
+      "thumbnailPrompt": "A brief description for generating a thumbnail image (2-3 sentences)"
     }
   ]
 }
 
-Generate content for each of these platforms: ${platformsList}`
+Generate content for: ${platformsList}`
           }
         ],
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI API error:', response.status, errorText);
+    if (!captionResponse.ok) {
+      const errorText = await captionResponse.text();
+      console.error('Caption AI error:', captionResponse.status, errorText);
       
-      if (response.status === 429) {
+      if (captionResponse.status === 429) {
         throw new Error('Rate limit exceeded. Please try again in a moment.');
       }
-      if (response.status === 402) {
+      if (captionResponse.status === 402) {
         throw new Error('AI credits exhausted. Please add credits to continue.');
       }
-      throw new Error('Failed to generate content');
+      throw new Error('Failed to generate captions');
     }
 
-    const data = await response.json();
-    const contentText = data.choices?.[0]?.message?.content || '';
+    const captionData = await captionResponse.json();
+    const contentText = captionData.choices?.[0]?.message?.content || '';
     
-    console.log('AI response length:', contentText.length);
+    console.log('Caption response length:', contentText.length);
 
-    // Parse the JSON response
-    let platformContent;
+    let platformContent: Array<{
+      platform: string;
+      caption: string;
+      thumbnailPrompt?: string;
+      thumbnailUrl?: string;
+    }> = [];
+
     try {
       const jsonMatch = contentText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -132,31 +200,39 @@ Generate content for each of these platforms: ${platformsList}`
         platformContent = parsed.platforms || [];
       }
     } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
-      console.error('Raw response:', contentText.substring(0, 500));
+      console.error('Caption parse error:', parseError);
     }
 
-    // Fallback if parsing fails
+    // Fallback content
     if (!platformContent || platformContent.length === 0) {
-      console.log('Using fallback content generation');
       platformContent = platforms.map((platform: string) => ({
         platform,
-        caption: `🎯 Key insights from today:\n\n${transcription.substring(0, 200)}...\n\nWhat are your thoughts? Let me know below! 👇`,
-        thumbnailConcept: `A clean, professional image with a key quote from the content overlaid on a branded background.`
+        caption: `🎯 Key insights:\n\n${contentSource.substring(0, 200)}...\n\nWhat do you think? 👇`,
+        thumbnailPrompt: `Professional thumbnail for ${platform} content about ${niche}`
       }));
     }
 
-    // Store the generated content
-    const contentJson = platformContent.reduce((acc: Record<string, string>, item: { platform: string; caption: string }) => {
-      acc[item.platform] = item.caption;
-      return acc;
-    }, {});
+    // Generate actual thumbnails for each platform
+    console.log('Generating thumbnails...');
+    const contentWithThumbnails = await Promise.all(
+      platformContent.map(async (item) => {
+        const thumbnailPrompt = item.thumbnailPrompt || `Professional ${item.platform} thumbnail for ${niche} content`;
+        const thumbnailUrl = await generateThumbnail(thumbnailPrompt, item.platform, LOVABLE_API_KEY);
+        
+        return {
+          platform: item.platform,
+          caption: item.caption,
+          thumbnailUrl: thumbnailUrl || undefined,
+        };
+      })
+    );
 
+    // Store the generated content
     const { error: updateError } = await supabaseClient
       .from('event_recordings')
       .update({
-        transcription,
-        insights: { platforms: platformContent },
+        transcription: transcription || additionalContext,
+        insights: { platforms: contentWithThumbnails },
         status: 'completed'
       })
       .eq('id', recordingId);
@@ -167,7 +243,7 @@ Generate content for each of these platforms: ${platformsList}`
 
     return new Response(JSON.stringify({
       success: true,
-      platformContent
+      platformContent: contentWithThumbnails
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

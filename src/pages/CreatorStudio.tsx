@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles } from "lucide-react";
-import { useRealtimeRecorder } from "@/hooks/useRealtimeRecorder";
+import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, Wifi, WifiOff } from "lucide-react";
+import { useOfflineRecorder } from "@/hooks/useOfflineRecorder";
 import AudioWaveform from "@/components/AudioWaveform";
 import PlatformSelector from "@/components/PlatformSelector";
 import PlatformOutputs from "@/components/PlatformOutputs";
+import ContentInputs from "@/components/ContentInputs";
+import { UploadedFile } from "@/components/FileUploader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
@@ -26,6 +28,7 @@ interface UserProfile {
 type StudioStage = 
   | 'ready' 
   | 'recording' 
+  | 'inputs'
   | 'platform-select' 
   | 'processing' 
   | 'completed';
@@ -33,7 +36,7 @@ type StudioStage =
 interface PlatformContent {
   platform: string;
   caption: string;
-  thumbnailConcept: string;
+  thumbnailUrl?: string;
 }
 
 const CreatorStudio = () => {
@@ -46,6 +49,8 @@ const CreatorStudio = () => {
   const [recordedTranscript, setRecordedTranscript] = useState('');
   const [recordedAudioBlob, setRecordedAudioBlob] = useState<Blob | null>(null);
   const [recordedDuration, setRecordedDuration] = useState(0);
+  const [additionalContext, setAdditionalContext] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   
   const navigate = useNavigate();
@@ -57,12 +62,13 @@ const CreatorStudio = () => {
     duration,
     liveTranscript,
     analyser,
+    isOnline,
     startRecording,
     pauseRecording,
     resumeRecording,
     stopRecording,
     error: recorderError
-  } = useRealtimeRecorder();
+  } = useOfflineRecorder();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -139,6 +145,10 @@ const CreatorStudio = () => {
     setRecordedAudioBlob(audioBlob);
     setRecordedTranscript(transcript);
     setRecordedDuration(duration);
+    setStage('inputs');
+  };
+
+  const handleContinueToSelect = () => {
     setStage('platform-select');
   };
 
@@ -160,7 +170,6 @@ const CreatorStudio = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Create recording entry
       const { data: recording, error: insertError } = await supabase
         .from('event_recordings')
         .insert({
@@ -173,7 +182,6 @@ const CreatorStudio = () => {
 
       if (insertError) throw insertError;
 
-      // Upload audio if available
       if (recordedAudioBlob) {
         const fileName = `${user.id}/${recording.id}.webm`;
         await supabase.storage
@@ -184,7 +192,6 @@ const CreatorStudio = () => {
           });
       }
 
-      // Get transcription if needed
       setProcessingStatus('Processing transcription...');
       let transcription = recordedTranscript;
       
@@ -201,19 +208,21 @@ const CreatorStudio = () => {
         }
       }
 
-      if (!transcription) {
-        throw new Error('No transcription available');
-      }
+      // Get file descriptions for AI context
+      const uploadedFileDescriptions = uploadedFiles.map(f => 
+        `${f.type}: ${f.file.name} (${(f.file.size / 1024).toFixed(1)} KB)`
+      );
 
-      // Generate content for selected platforms
       setProcessingStatus('AI is generating your content...');
       
       const processResponse = await supabase.functions.invoke('generate-platform-content', {
         body: {
           recordingId: recording.id,
           transcription,
+          additionalContext,
           userProfile: profile,
-          platforms: selectedPlatforms
+          platforms: selectedPlatforms,
+          uploadedFileDescriptions
         }
       });
 
@@ -247,6 +256,8 @@ const CreatorStudio = () => {
     setRecordedTranscript('');
     setRecordedAudioBlob(null);
     setRecordedDuration(0);
+    setAdditionalContext('');
+    setUploadedFiles([]);
   };
 
   if (loading) {
@@ -275,38 +286,48 @@ const CreatorStudio = () => {
             <span className="font-semibold text-lg">Creator Studio</span>
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <User className="w-5 h-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
-              <div className="px-3 py-2 border-b border-border/50">
-                <p className="text-sm font-medium truncate">{profile?.niche}</p>
-                <p className="text-xs text-muted-foreground">{profile?.tone} tone</p>
-              </div>
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-3">
+            {/* Connection Status */}
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
+              isOnline ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
+            }`}>
+              {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+              {isOnline ? 'Online' : 'Offline'}
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <User className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
+                <div className="px-3 py-2 border-b border-border/50">
+                  <p className="text-sm font-medium truncate">{profile?.niche}</p>
+                  <p className="text-xs text-muted-foreground">{profile?.tone} tone</p>
+                </div>
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
         
-        {/* Ready State - Central Record Button */}
+        {/* Ready State */}
         {stage === 'ready' && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] animate-fade-in">
             <div className="text-center mb-12">
               <h1 className="text-4xl font-bold mb-3">
-                Record Your <span className="text-gradient">Content</span>
+                Create Your <span className="text-gradient">Content</span>
               </h1>
               <p className="text-muted-foreground text-lg max-w-md mx-auto">
-                Speak naturally. AI will transform your words into platform-ready posts.
+                Record audio, add context, and let AI create platform-ready posts with thumbnails.
               </p>
             </div>
 
@@ -331,20 +352,23 @@ const CreatorStudio = () => {
         {/* Recording State */}
         {stage === 'recording' && isRecording && (
           <div className="animate-slide-up space-y-6">
-            {/* Recording Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${isPaused ? 'bg-muted-foreground' : 'bg-destructive animate-pulse'}`} />
                 <h2 className="text-2xl font-semibold">
                   {isPaused ? 'Paused' : 'Recording'}
                 </h2>
+                {!isOnline && (
+                  <span className="text-xs text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
+                    Offline mode
+                  </span>
+                )}
               </div>
               <div className="text-3xl font-mono font-bold text-primary">
                 {formatDuration(duration)}
               </div>
             </div>
 
-            {/* Waveform */}
             <div className="w-full h-48 rounded-2xl overflow-hidden border border-border/50 bg-card/50">
               <AudioWaveform 
                 analyser={analyser} 
@@ -353,7 +377,6 @@ const CreatorStudio = () => {
               />
             </div>
 
-            {/* Live Transcription */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-muted-foreground' : 'bg-primary animate-pulse'}`} />
@@ -371,7 +394,6 @@ const CreatorStudio = () => {
               </ScrollArea>
             </div>
 
-            {/* Recording Controls */}
             <div className="flex justify-center gap-4 pt-4">
               {isPaused ? (
                 <Button onClick={resumeRecording} variant="outline" size="lg" className="gap-2 px-8">
@@ -387,6 +409,41 @@ const CreatorStudio = () => {
               <Button onClick={handleStopRecording} size="lg" className="gap-2 px-8">
                 <Square className="w-5 h-5" />
                 Finish Recording
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Additional Inputs State */}
+        {stage === 'inputs' && (
+          <div className="animate-slide-up space-y-8 max-w-2xl mx-auto">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold mb-2">Add More Context</h2>
+              <p className="text-muted-foreground">
+                Optionally add text or upload files to enhance your content
+              </p>
+            </div>
+
+            {recordedTranscript && (
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <p className="text-xs font-medium text-muted-foreground mb-2">RECORDED TRANSCRIPT</p>
+                <p className="text-sm line-clamp-3">{recordedTranscript}</p>
+              </div>
+            )}
+
+            <ContentInputs
+              additionalContext={additionalContext}
+              onContextChange={setAdditionalContext}
+              uploadedFiles={uploadedFiles}
+              onFilesChange={setUploadedFiles}
+            />
+
+            <div className="flex justify-center gap-4 pt-4">
+              <Button variant="outline" onClick={handleReset}>
+                Start Over
+              </Button>
+              <Button onClick={handleContinueToSelect} className="px-8">
+                Continue
               </Button>
             </div>
           </div>
@@ -408,8 +465,8 @@ const CreatorStudio = () => {
             />
 
             <div className="flex justify-center gap-4 pt-4">
-              <Button variant="outline" onClick={handleReset}>
-                Start Over
+              <Button variant="outline" onClick={() => setStage('inputs')}>
+                Back
               </Button>
               <Button 
                 onClick={handlePlatformConfirm}
@@ -430,17 +487,20 @@ const CreatorStudio = () => {
             </div>
             <h2 className="text-2xl font-semibold mb-2">Creating Your Content</h2>
             <p className="text-muted-foreground">{processingStatus}</p>
+            <p className="text-xs text-muted-foreground mt-4">
+              Generating thumbnails for {selectedPlatforms.length} platform{selectedPlatforms.length > 1 ? 's' : ''}...
+            </p>
           </div>
         )}
 
-        {/* Completed State - Dynamic Platform Outputs */}
+        {/* Completed State */}
         {stage === 'completed' && (
           <div className="animate-slide-up space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold">Your Content is Ready</h2>
                 <p className="text-muted-foreground mt-1">
-                  Edit as needed, then copy to your platforms
+                  Edit captions and download thumbnails
                 </p>
               </div>
               <Button onClick={handleReset} variant="outline">
@@ -450,7 +510,7 @@ const CreatorStudio = () => {
 
             <PlatformOutputs 
               content={generatedContent}
-              onContentChange={(updatedContent) => setGeneratedContent(updatedContent)}
+              onContentChange={setGeneratedContent}
             />
           </div>
         )}
