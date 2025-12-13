@@ -12,6 +12,7 @@ import ContentInputs from "@/components/ContentInputs";
 import { UploadedFile } from "@/components/FileUploader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AILoader } from "@/components/ui/ai-loader";
+import { BeamsBackground } from "@/components/ui/beams-background";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -270,12 +271,7 @@ const CreatorStudio = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Background effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-80 h-80 bg-primary/3 rounded-full blur-3xl" />
-      </div>
+    <BeamsBackground intensity="medium" className="min-h-screen flex flex-col">
 
       {/* Top Bar */}
       <header className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
@@ -620,7 +616,7 @@ const CreatorStudio = () => {
           </div>
         )}
       </main>
-    </div>
+    </BeamsBackground>
   );
 };
 
