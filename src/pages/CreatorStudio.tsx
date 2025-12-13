@@ -11,6 +11,7 @@ import PlatformOutputs from "@/components/PlatformOutputs";
 import ContentInputs from "@/components/ContentInputs";
 import { UploadedFile } from "@/components/FileUploader";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AILoader } from "@/components/ui/ai-loader";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -594,63 +595,7 @@ const CreatorStudio = () => {
 
         {/* Processing State */}
         {stage === 'processing' && (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
-            <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mb-8">
-              <Wand2 className="w-12 h-12 text-primary animate-pulse" />
-            </div>
-            <h2 className="text-2xl font-semibold mb-4">Creating Your Content</h2>
-            
-            {/* Named Processing Steps */}
-            <div className="space-y-3 text-left max-w-xs">
-              <div className="flex items-center gap-3">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                  processingStatus.includes('audio') ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                }`}>
-                  {processingStatus.includes('audio') ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                </div>
-                <span className={processingStatus.includes('audio') ? 'text-foreground' : 'text-muted-foreground'}>
-                  Uploading audio...
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                  processingStatus.includes('transcription') ? 'bg-primary text-primary-foreground' : 
-                  processingStatus.includes('AI') || processingStatus.includes('Generating') ? 'bg-muted text-muted-foreground' : 'bg-muted/50 text-muted-foreground/50'
-                }`}>
-                  {processingStatus.includes('transcription') ? <Loader2 className="w-3 h-3 animate-spin" /> : 
-                   processingStatus.includes('AI') || processingStatus.includes('Generating') ? <CheckCircle2 className="w-3 h-3" /> : <span className="w-3 h-3" />}
-                </div>
-                <span className={processingStatus.includes('transcription') ? 'text-foreground' : 
-                  processingStatus.includes('AI') || processingStatus.includes('Generating') ? 'text-muted-foreground' : 'text-muted-foreground/50'}>
-                  Processing transcription...
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                  processingStatus.includes('AI') || processingStatus.includes('caption') ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground/50'
-                }`}>
-                  {processingStatus.includes('AI') || processingStatus.includes('caption') ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="w-3 h-3" />}
-                </div>
-                <span className={processingStatus.includes('AI') || processingStatus.includes('caption') ? 'text-foreground' : 'text-muted-foreground/50'}>
-                  Generating captions...
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                  processingStatus.includes('thumbnail') ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground/50'
-                }`}>
-                  {processingStatus.includes('thumbnail') ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="w-3 h-3" />}
-                </div>
-                <span className={processingStatus.includes('thumbnail') ? 'text-foreground' : 'text-muted-foreground/50'}>
-                  Generating thumbnails...
-                </span>
-              </div>
-            </div>
-            
-            <p className="text-xs text-muted-foreground mt-6">
-              Creating content for {selectedPlatforms.join(', ')}
-            </p>
-          </div>
+          <AILoader text={processingStatus || "Generating"} />
         )}
 
         {/* Completed State */}
