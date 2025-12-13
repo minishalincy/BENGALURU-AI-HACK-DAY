@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, Wifi, WifiOff, FileText, Image, Layers, Headphones, Brain, Wand2, CheckCircle2, ArrowRight, FolderOpen, Zap, Users, Presentation, Lightbulb } from "lucide-react";
+import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, Wifi, WifiOff, FileText, Image, Layers, Headphones, Brain, Wand2, CheckCircle2, ArrowRight, FolderOpen, Zap, Users, Presentation, Lightbulb, MessageSquare, Target, ThumbsUp } from "lucide-react";
 import { useOfflineRecorder } from "@/hooks/useOfflineRecorder";
 import AudioWaveform from "@/components/AudioWaveform";
 import PlatformSelector from "@/components/PlatformSelector";
@@ -35,10 +35,18 @@ type StudioStage =
   | 'processing' 
   | 'completed';
 
+type CreationMode = 'speaker' | 'creator';
+
 interface PlatformContent {
   platform: string;
   caption: string;
   thumbnailUrl?: string;
+}
+
+interface RecommendedPlatform {
+  platform: string;
+  reason: string;
+  score: number;
 }
 
 const CreatorStudio = () => {
@@ -53,6 +61,10 @@ const CreatorStudio = () => {
   const [recordedDuration, setRecordedDuration] = useState(0);
   const [additionalContext, setAdditionalContext] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [creationMode, setCreationMode] = useState<CreationMode>('creator');
+  const [keyTakeaways, setKeyTakeaways] = useState<string[]>([]);
+  const [recommendedPlatforms, setRecommendedPlatforms] = useState<RecommendedPlatform[]>([]);
+  const [showRecommendations, setShowRecommendations] = useState(false);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   
   const navigate = useNavigate();
@@ -152,6 +164,13 @@ const CreatorStudio = () => {
 
   const handleContinueToSelect = () => {
     setStage('platform-select');
+    setShowRecommendations(false);
+  };
+
+  const handleAcceptRecommendation = (platform: string) => {
+    if (!selectedPlatforms.includes(platform.toLowerCase())) {
+      setSelectedPlatforms([...selectedPlatforms, platform.toLowerCase()]);
+    }
   };
 
   const handlePlatformConfirm = async () => {
@@ -177,7 +196,8 @@ const CreatorStudio = () => {
         .insert({
           user_id: user.id,
           status: 'processing',
-          duration_seconds: recordedDuration
+          duration_seconds: recordedDuration,
+          creation_mode: creationMode
         })
         .select()
         .single();
@@ -215,7 +235,7 @@ const CreatorStudio = () => {
         `${f.type}: ${f.file.name} (${(f.file.size / 1024).toFixed(1)} KB)`
       );
 
-      setProcessingStatus('AI is generating your content...');
+      setProcessingStatus('AI is analyzing your content...');
       
       const processResponse = await supabase.functions.invoke('generate-platform-content', {
         body: {
@@ -224,7 +244,8 @@ const CreatorStudio = () => {
           additionalContext,
           userProfile: profile,
           platforms: selectedPlatforms,
-          uploadedFileDescriptions
+          uploadedFileDescriptions,
+          creationMode
         }
       });
 
@@ -240,11 +261,16 @@ const CreatorStudio = () => {
           transcription: transcription,
           platforms: selectedPlatforms,
           generated_content: processResponse.data.platformContent,
-          additional_context: additionalContext
+          additional_context: additionalContext,
+          key_takeaways: processResponse.data.keyTakeaways,
+          recommended_platforms: processResponse.data.recommendedPlatforms,
+          creation_mode: creationMode
         })
         .eq('id', recording.id);
 
       setGeneratedContent(processResponse.data.platformContent);
+      setKeyTakeaways(processResponse.data.keyTakeaways || []);
+      setRecommendedPlatforms(processResponse.data.recommendedPlatforms || []);
       setStage('completed');
       
       toast({
@@ -272,6 +298,10 @@ const CreatorStudio = () => {
     setRecordedDuration(0);
     setAdditionalContext('');
     setUploadedFiles([]);
+    setCreationMode('creator');
+    setKeyTakeaways([]);
+    setRecommendedPlatforms([]);
+    setShowRecommendations(false);
   };
 
   if (loading) {
@@ -356,6 +386,41 @@ const CreatorStudio = () => {
               <p className="text-lg text-muted-foreground max-w-xl mx-auto">
                 Capture talks, workshops, meetings, or ideas — and instantly transform them into polished posts, summaries, and visuals.
               </p>
+            </div>
+
+            {/* Mode Selector */}
+            <div className="mb-8 w-full max-w-md">
+              <p className="text-xs text-muted-foreground text-center mb-3">Select your mode</p>
+              <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-card/50 border border-border/50">
+                <button
+                  onClick={() => setCreationMode('speaker')}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
+                    creationMode === 'speaker'
+                      ? 'bg-primary/10 border border-primary/30 text-primary'
+                      : 'hover:bg-card/80 text-muted-foreground'
+                  }`}
+                >
+                  <Presentation className="w-5 h-5" />
+                  <span className="font-medium text-sm">Speaker Mode</span>
+                  <span className="text-xs opacity-70 text-center leading-tight">
+                    Structured summaries & professional tone
+                  </span>
+                </button>
+                <button
+                  onClick={() => setCreationMode('creator')}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
+                    creationMode === 'creator'
+                      ? 'bg-primary/10 border border-primary/30 text-primary'
+                      : 'hover:bg-card/80 text-muted-foreground'
+                  }`}
+                >
+                  <Sparkles className="w-5 h-5" />
+                  <span className="font-medium text-sm">Creator Mode</span>
+                  <span className="text-xs opacity-70 text-center leading-tight">
+                    Engaging captions & platform-ready
+                  </span>
+                </button>
+              </div>
             </div>
 
             {/* Use Cases - Who This Is For */}
@@ -450,6 +515,13 @@ const CreatorStudio = () => {
                 <h2 className="text-2xl font-semibold">
                   {isPaused ? 'Paused' : 'Recording'}
                 </h2>
+                <span className={`text-xs px-2 py-0.5 rounded ${
+                  creationMode === 'speaker' 
+                    ? 'bg-blue-500/10 text-blue-500' 
+                    : 'bg-primary/10 text-primary'
+                }`}>
+                  {creationMode === 'speaker' ? 'Speaker Mode' : 'Creator Mode'}
+                </span>
                 {!isOnline && (
                   <span className="text-xs text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
                     Offline mode
@@ -555,6 +627,9 @@ const CreatorStudio = () => {
               <p className="text-muted-foreground">
                 Let's create your content. Add any extra context if needed.
               </p>
+              <p className="text-xs text-primary mt-2">
+                Mode: {creationMode === 'speaker' ? 'Speaker / Workshop' : 'Creator / Content'}
+              </p>
             </div>
 
             {recordedTranscript && (
@@ -600,6 +675,49 @@ const CreatorStudio = () => {
               </p>
             </div>
 
+            {/* AI Platform Recommendations - Show if we have content to analyze */}
+            {(recordedTranscript || additionalContext) && !showRecommendations && (
+              <Button 
+                variant="outline" 
+                className="w-full gap-2 border-primary/30 hover:bg-primary/10"
+                onClick={() => setShowRecommendations(true)}
+              >
+                <Target className="w-4 h-4" />
+                Get AI Platform Recommendations
+              </Button>
+            )}
+
+            {showRecommendations && recommendedPlatforms.length > 0 && (
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Recommended for your content</span>
+                </div>
+                <div className="space-y-2">
+                  {recommendedPlatforms.map((rec, idx) => (
+                    <div 
+                      key={idx} 
+                      className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border/50"
+                    >
+                      <div>
+                        <span className="font-medium text-sm">{rec.platform}</span>
+                        <p className="text-xs text-muted-foreground">{rec.reason}</p>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        className="gap-1"
+                        onClick={() => handleAcceptRecommendation(rec.platform)}
+                      >
+                        <ThumbsUp className="w-3 h-3" />
+                        Add
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <PlatformSelector 
               selectedPlatforms={selectedPlatforms}
               onSelectionChange={setSelectedPlatforms}
@@ -609,7 +727,8 @@ const CreatorStudio = () => {
             {selectedPlatforms.length > 0 && (
               <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 text-center">
                 <p className="text-sm text-muted-foreground">
-                  We'll generate <span className="text-primary font-medium">captions</span> and{' '}
+                  We'll generate <span className="text-primary font-medium">captions</span>,{' '}
+                  <span className="text-primary font-medium">key takeaways</span> and{' '}
                   <span className="text-primary font-medium">AI thumbnails</span> for{' '}
                   {selectedPlatforms.length === 1 
                     ? selectedPlatforms[0] 
@@ -654,6 +773,26 @@ const CreatorStudio = () => {
                 Create New
               </Button>
             </div>
+
+            {/* Key Takeaways Section */}
+            {keyTakeaways.length > 0 && (
+              <div className="p-6 rounded-2xl bg-card/50 border border-border/50">
+                <div className="flex items-center gap-2 mb-4">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  <h3 className="font-semibold text-lg">Key Takeaways</h3>
+                </div>
+                <ul className="space-y-3">
+                  {keyTakeaways.map((takeaway, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center">
+                        {idx + 1}
+                      </span>
+                      <span className="text-sm leading-relaxed">{takeaway}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <PlatformOutputs 
               content={generatedContent}

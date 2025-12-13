@@ -88,14 +88,15 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { recordingId, transcription, additionalContext, userProfile, platforms, uploadedFileDescriptions } = await req.json();
+    const { recordingId, transcription, additionalContext, userProfile, platforms, uploadedFileDescriptions, creationMode } = await req.json();
 
     if (!recordingId || !platforms || platforms.length === 0) {
       throw new Error('Recording ID and platforms are required');
     }
 
     const contentSource = transcription || additionalContext || 'No content provided';
-    console.log('Generating content for platforms:', platforms);
+    const mode = creationMode || 'creator';
+    console.log('Generating content for platforms:', platforms, 'Mode:', mode);
 
     const niche = userProfile?.niche || 'general content';
     const goal = userProfile?.long_term_goal || 'engage audience';
@@ -115,7 +116,24 @@ serve(async (req) => {
       fullContext += `UPLOADED FILES:\n${uploadedFileDescriptions.join('\n')}\n\n`;
     }
 
-    // Generate captions
+    // Mode-specific instructions
+    const modeInstructions = mode === 'speaker' 
+      ? `You are creating content for a SPEAKER/WORKSHOP presenter.
+Focus on:
+- Structured, educational summaries
+- Professional and authoritative tone
+- Key insights and takeaways that attendees would want to remember
+- LinkedIn-style or blog-ready format
+- Clear value propositions and lessons learned`
+      : `You are creating content for a CONTENT CREATOR.
+Focus on:
+- Engaging, attention-grabbing captions
+- Platform-native language and style
+- Hooks and calls to action
+- Storytelling elements
+- Shareable, viral-worthy format`;
+
+    // Generate captions, key takeaways, and platform recommendations
     const captionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -127,7 +145,9 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an expert social media content creator. Create platform-ready posts.
+            content: `You are an expert social media content creator and content analyst.
+
+${modeInstructions}
 
 Creator Profile:
 - Niche: ${niche}
@@ -140,19 +160,38 @@ Guidelines:
 - Include appropriate emojis and formatting
 - Content should be ready to post immediately
 - Generate a brief thumbnail concept for each platform
+- Extract 3-7 key takeaways from the content
+- Analyze the content and recommend the best platforms for it
 
 IMPORTANT: Output valid JSON only.`
           },
           {
             role: "user",
-            content: `Create platform-specific content from this input.
+            content: `Analyze and create platform-specific content from this input.
 
 ${fullContext}
 
-PLATFORMS: ${platformsList}
+SELECTED PLATFORMS: ${platformsList}
 
 Return JSON with this structure:
 {
+  "keyTakeaways": [
+    "Concise key point 1",
+    "Concise key point 2",
+    "Concise key point 3"
+  ],
+  "recommendedPlatforms": [
+    {
+      "platform": "platform_name",
+      "reason": "Brief reason why this platform is suitable",
+      "score": 85
+    }
+  ],
+  "contentAnalysis": {
+    "tone": "detected tone (educational, inspirational, professional, casual)",
+    "intent": "primary intent of the content",
+    "length": "short/medium/long"
+  },
   "platforms": [
     {
       "platform": "platform_name",
@@ -162,7 +201,10 @@ Return JSON with this structure:
   ]
 }
 
-Generate content for: ${platformsList}`
+Analyze the content to:
+1. Extract 3-7 key takeaways (concise, memorable points)
+2. Recommend 2-4 platforms that would work best for this content (can include platforms not in the selected list)
+3. Generate platform-specific captions for: ${platformsList}`
           }
         ],
       }),
@@ -184,7 +226,7 @@ Generate content for: ${platformsList}`
     const captionData = await captionResponse.json();
     const contentText = captionData.choices?.[0]?.message?.content || '';
     
-    console.log('Caption response length:', contentText.length);
+    console.log('AI response length:', contentText.length);
 
     let platformContent: Array<{
       platform: string;
@@ -192,15 +234,21 @@ Generate content for: ${platformsList}`
       thumbnailPrompt?: string;
       thumbnailUrl?: string;
     }> = [];
+    let keyTakeaways: string[] = [];
+    let recommendedPlatforms: Array<{ platform: string; reason: string; score: number }> = [];
+    let contentAnalysis: { tone?: string; intent?: string; length?: string } = {};
 
     try {
       const jsonMatch = contentText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         platformContent = parsed.platforms || [];
+        keyTakeaways = parsed.keyTakeaways || [];
+        recommendedPlatforms = parsed.recommendedPlatforms || [];
+        contentAnalysis = parsed.contentAnalysis || {};
       }
     } catch (parseError) {
-      console.error('Caption parse error:', parseError);
+      console.error('Response parse error:', parseError);
     }
 
     // Fallback content
@@ -210,6 +258,23 @@ Generate content for: ${platformsList}`
         caption: `🎯 Key insights:\n\n${contentSource.substring(0, 200)}...\n\nWhat do you think? 👇`,
         thumbnailPrompt: `Professional thumbnail for ${platform} content about ${niche}`
       }));
+    }
+
+    // Fallback key takeaways
+    if (!keyTakeaways || keyTakeaways.length === 0) {
+      keyTakeaways = [
+        "Main insight from your recording",
+        "Key point that stood out",
+        "Actionable takeaway for your audience"
+      ];
+    }
+
+    // Fallback platform recommendations
+    if (!recommendedPlatforms || recommendedPlatforms.length === 0) {
+      recommendedPlatforms = [
+        { platform: "LinkedIn", reason: "Great for professional insights", score: 85 },
+        { platform: "Twitter", reason: "Perfect for quick thoughts", score: 75 }
+      ];
     }
 
     // Generate actual thumbnails for each platform
@@ -232,7 +297,11 @@ Generate content for: ${platformsList}`
       .from('event_recordings')
       .update({
         transcription: transcription || additionalContext,
-        insights: { platforms: contentWithThumbnails },
+        insights: { platforms: contentWithThumbnails, contentAnalysis },
+        generated_content: contentWithThumbnails,
+        key_takeaways: keyTakeaways,
+        recommended_platforms: recommendedPlatforms,
+        creation_mode: mode,
         status: 'completed'
       })
       .eq('id', recordingId);
@@ -243,7 +312,10 @@ Generate content for: ${platformsList}`
 
     return new Response(JSON.stringify({
       success: true,
-      platformContent: contentWithThumbnails
+      platformContent: contentWithThumbnails,
+      keyTakeaways,
+      recommendedPlatforms,
+      contentAnalysis
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

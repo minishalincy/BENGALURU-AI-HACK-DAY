@@ -90,14 +90,17 @@ export type Database = {
           additional_context: string | null
           audio_url: string | null
           created_at: string
+          creation_mode: string | null
           duration_seconds: number | null
           event_title: string | null
           generated_content: Json | null
           id: string
           insights: Json | null
           instagram_caption: string | null
+          key_takeaways: Json | null
           linkedin_post: string | null
           platforms: string[] | null
+          recommended_platforms: Json | null
           status: string
           transcription: string | null
           twitter_thread: string | null
@@ -108,14 +111,17 @@ export type Database = {
           additional_context?: string | null
           audio_url?: string | null
           created_at?: string
+          creation_mode?: string | null
           duration_seconds?: number | null
           event_title?: string | null
           generated_content?: Json | null
           id?: string
           insights?: Json | null
           instagram_caption?: string | null
+          key_takeaways?: Json | null
           linkedin_post?: string | null
           platforms?: string[] | null
+          recommended_platforms?: Json | null
           status?: string
           transcription?: string | null
           twitter_thread?: string | null
@@ -126,14 +132,17 @@ export type Database = {
           additional_context?: string | null
           audio_url?: string | null
           created_at?: string
+          creation_mode?: string | null
           duration_seconds?: number | null
           event_title?: string | null
           generated_content?: Json | null
           id?: string
           insights?: Json | null
           instagram_caption?: string | null
+          key_takeaways?: Json | null
           linkedin_post?: string | null
           platforms?: string[] | null
+          recommended_platforms?: Json | null
           status?: string
           transcription?: string | null
           twitter_thread?: string | null
