@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, Wifi, WifiOff, FileText, Image, Layers, Headphones, Brain, Wand2, CheckCircle2, ArrowRight } from "lucide-react";
+import { Mic, Pause, Play, Square, Loader2, User, LogOut, Sparkles, Wifi, WifiOff, FileText, Image, Layers, Headphones, Brain, Wand2, CheckCircle2, ArrowRight, FolderOpen } from "lucide-react";
 import { useOfflineRecorder } from "@/hooks/useOfflineRecorder";
 import AudioWaveform from "@/components/AudioWaveform";
 import PlatformSelector from "@/components/PlatformSelector";
@@ -232,6 +232,18 @@ const CreatorStudio = () => {
         throw new Error(processResponse.error.message || 'Content generation failed');
       }
 
+      // Save generated content to database
+      await supabase
+        .from('event_recordings')
+        .update({
+          status: 'completed',
+          transcription: transcription,
+          platforms: selectedPlatforms,
+          generated_content: processResponse.data.platformContent,
+          additional_context: additionalContext
+        })
+        .eq('id', recording.id);
+
       setGeneratedContent(processResponse.data.platformContent);
       setStage('completed');
       
@@ -291,6 +303,17 @@ const CreatorStudio = () => {
               {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
               {isOnline ? 'Online' : 'Offline'}
             </div>
+
+            {/* My Creations Link */}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/creations")}
+              className="gap-2"
+            >
+              <FolderOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">My Creations</span>
+            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
