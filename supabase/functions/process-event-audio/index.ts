@@ -37,11 +37,6 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      throw new Error('Unauthorized');
-    }
-
     const { recordingId, transcription, userProfile } = await req.json();
 
     if (!recordingId || !transcription) {
@@ -208,7 +203,7 @@ Create content in the following JSON format:
       ? generatedContent.twitterThread.content.join('\n\n---\n\n')
       : generatedContent.twitterThread?.content || '';
 
-    // Update the recording in the database
+    // Update the recording in the database. RLS ensures only the owner can update.
     const { error: updateError } = await supabaseClient
       .from('event_recordings')
       .update({
@@ -219,8 +214,7 @@ Create content in the following JSON format:
         twitter_thread: twitterThreadContent,
         status: 'completed'
       })
-      .eq('id', recordingId)
-      .eq('user_id', user.id);
+      .eq('id', recordingId);
 
     if (updateError) {
       console.error('Database update error:', updateError);
