@@ -355,13 +355,13 @@ const CreatorStudio = () => {
             <span className="font-semibold text-lg tracking-tight">Creator Studio</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {/* My Creations Link */}
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="sm" 
               onClick={() => navigate("/creations")}
-              className="gap-2 text-muted-foreground hover:text-foreground"
+              className="gap-2 font-medium border-border/60 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all"
             >
               <FolderOpen className="w-4 h-4" />
               <span className="hidden sm:inline">My Creations</span>
